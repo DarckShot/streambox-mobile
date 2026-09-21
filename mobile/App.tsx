@@ -1,5 +1,9 @@
-import { StatusBar, StyleSheet, Text, useColorScheme } from 'react-native';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { DarkTheme, DefaultTheme, NavigationContainer } from '@react-navigation/native';
+import { StatusBar, useColorScheme } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { LINKING_OPTIONS } from './src/navigation/linking';
+import { RootNavigator } from './src/navigation/RootNavigator';
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -7,40 +11,11 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <SafeAreaView
-        edges={['top', 'right', 'bottom', 'left']}
-        style={[styles.root, isDarkMode ? styles.rootDark : styles.rootLight]}
-      >
-        <Text style={[styles.mainText, isDarkMode ? styles.textDark : styles.textLight]}>
-          Welcome to the Streambox Mobile App
-        </Text>
-      </SafeAreaView>
+      <NavigationContainer linking={LINKING_OPTIONS} theme={isDarkMode ? DarkTheme : DefaultTheme}>
+        <RootNavigator />
+      </NavigationContainer>
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  rootLight: {
-    backgroundColor: '#FFFFFF',
-  },
-  rootDark: {
-    backgroundColor: '#000000',
-  },
-  textLight: {
-    color: '#000000',
-  },
-  textDark: {
-    color: '#FFFFFF',
-  },
-  mainText: {
-    paddingHorizontal: 16,
-    textAlign: 'center',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-});
 
 export default App;

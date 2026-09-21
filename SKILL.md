@@ -85,6 +85,12 @@ Distinguish a created release build, readiness for publication, and an actual st
 
 Add a dependency only for a concrete requirement. Do not replace the selected stack or add a library merely to demonstrate it. For native dependencies, evaluate installation and configuration consequences on both Android and iOS. Use specialized skills and current official documentation for library-specific decisions.
 
+## Code conventions
+
+- Do not use `as const` when ordinary inference or an explicit type can express the requirement without it. Use it only when literal narrowing is genuinely necessary.
+- Write source-code comments in Russian. Do not rewrite generated or third-party files merely to translate their comments.
+- Build user-facing UI with a coherent StreamBox visual style from the first implementation, including intentional loading, empty, and placeholder states; do not leave raw default-looking screens unless the user explicitly requests a technical prototype.
+
 ## Workflow
 
 ### Commit-only requests
@@ -117,6 +123,16 @@ After implementation:
 1. run checks proportional to the change;
 2. verify whether structure, stack, dependencies, setup, API, navigation, native configuration, build/release, testing, or CI changed;
 3. update the corresponding documentation in the same task only when factual project state changed.
+
+### Validation scope
+
+Keep feedback fast and increase validation depth only when the change justifies it:
+
+- For JS/TS, styling, SVG markup, or screen composition changes without native configuration changes, run formatting, lint, TypeScript, and relevant Jest tests. Do not run Gradle or Xcode by default.
+- After adding or changing a native dependency or native configuration, run incremental debug builds only for affected platforms. Reuse build caches and target one active Android ABI and one specific booted iOS Simulator with `ONLY_ACTIVE_ARCH=YES` when this is sufficient.
+- Do not clean build caches, build every Android ABI, use a generic multi-architecture iOS destination, or run full release builds unless the task requires that coverage, CI/release verification is in scope, or the user explicitly requests it.
+- A previous successful native build may be reused when subsequent edits are limited to JS/TS or documentation and do not alter native integration.
+- If a broader check is unusually slow, explain why it is necessary before starting it.
 
 ## Documentation policy
 

@@ -4,17 +4,17 @@
 mobile/
 ├── android/                 # Нативный Android-проект
 ├── ios/                     # Нативный iOS-проект
-├── src/                     # Заготовка прикладного TypeScript-кода
+├── src/                     # Прикладной TypeScript-код
 │   ├── api/                 # Будущий API-слой
 │   ├── assets/
 │   │   ├── icons/           # Иконки
 │   │   └── images/          # Изображения
-│   ├── components/          # Общие UI-компоненты
+│   ├── components/          # Общие UI-компоненты и SVG-иконки
 │   ├── constants/           # Константы и конфигурационные значения
 │   ├── hooks/               # React-хуки
-│   ├── navigation/          # Навигация и типы маршрутов
+│   ├── navigation/          # Навигаторы, маршруты, параметры и deep links
 │   ├── providers/           # Глобальные React-провайдеры
-│   ├── screens/             # Экраны
+│   ├── screens/             # Экраны и их временные заглушки
 │   ├── services/            # Сервисы и платформенные интеграции
 │   ├── store/               # Глобальное клиентское состояние
 │   ├── types/               # Общие TypeScript-типы
@@ -30,8 +30,44 @@ mobile/
 └── jest.config.js           # Jest
 ```
 
-`src/` пока состоит из пустых каталогов с `.gitkeep`. Назначение каталогов является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` можно удалить.
+Сейчас рабочий код находится в `components`, `constants`, `navigation` и `screens`. Остальные каталоги `src/` пока пусты и сохраняются с помощью `.gitkeep`; их назначение является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` удаляется.
 
-Нативная точка входа Android использует package/application ID `com.streambox`. Обе платформы запускают React Native-модуль `StreamBox`, зарегистрированный в `index.js`.
+```text
+src/navigation/
+├── components/             # Элементы интерфейса, относящиеся к навигации
+├── MainTabNavigator.tsx    # Вкладки Home, Search, Favorites и Profile
+├── MainTabNavigator.styles.ts
+├── RootNavigator.tsx       # Корневой native stack
+├── linking.ts              # Deep-link конфигурация streambox://
+├── routes.ts               # Имена маршрутов и внешние пути
+└── types.ts                # Параметры маршрутов
+
+src/screens/
+├── HomeScreen.tsx
+├── SearchScreen.tsx
+├── FavoritesScreen.tsx
+├── ProfileScreen.tsx
+├── VideoDetailsScreen.tsx
+├── PlayerScreen.tsx
+├── HistoryScreen.tsx
+└── SettingsScreen.tsx
+
+src/components/icons/
+├── HomeIcon.tsx
+├── SearchIcon.tsx
+├── FavoritesIcon.tsx
+├── ProfileIcon.tsx
+├── navigationIcon.constants.ts
+└── navigationIcon.types.ts
+
+src/components/placeholder/
+├── PlaceholderScreen.tsx
+└── PlaceholderScreen.styles.ts
+
+src/constants/
+└── theme.ts                # Общие цвета интерфейса
+```
+
+Нативная точка входа Android использует package/application ID `com.streambox`. Обе платформы запускают React Native-модуль `StreamBox`, зарегистрированный в `index.js`, и принимают deep links со схемой `streambox://`.
 
 Каталоги `node_modules/`, `ios/Pods/`, `ios/build/`, `vendor/bundle/` и другие генерируемые артефакты не являются частью исходной архитектуры и не должны коммититься.

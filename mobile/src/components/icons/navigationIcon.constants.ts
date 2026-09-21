@@ -1,0 +1,2 @@
+export const NAVIGATION_ICON_SIZE = 24;
+export const NAVIGATION_ICON_STROKE_WIDTH = 1.8;
