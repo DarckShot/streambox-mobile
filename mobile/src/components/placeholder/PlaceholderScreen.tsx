@@ -11,12 +11,12 @@ type PlaceholderScreenProps = {
   detail?: string;
 };
 
-export function PlaceholderScreen({
+export const PlaceholderScreen = ({
   eyebrow,
   title,
   description,
   detail,
-}: PlaceholderScreenProps): ReactElement {
+}: PlaceholderScreenProps): ReactElement => {
   const { colors, dark } = useTheme();
 
   return (
@@ -43,4 +43,4 @@ export function PlaceholderScreen({
       </View>
     </View>
   );
-}
+};

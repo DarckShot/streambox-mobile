@@ -7,13 +7,14 @@ import { STREAMBOX_COLORS } from '../../constants/theme';
 
 type TabBarIconRenderer = NonNullable<BottomTabNavigationOptions['tabBarIcon']>;
 
-export function createTabBarIcon(Icon: NavigationIconComponent): TabBarIconRenderer {
-  return ({ color, focused, size }): ReactElement => (
-    <View style={[styles.container, focused && styles.focused]}>
-      <Icon color={color} focused={focused} size={size - 1} />
-    </View>
-  );
-}
+export const createTabBarIcon =
+  (Icon: NavigationIconComponent): TabBarIconRenderer =>
+  ({ color, focused, size }): ReactElement =>
+    (
+      <View style={[styles.container, focused && styles.focused]}>
+        <Icon color={color} focused={focused} size={size - 1} />
+      </View>
+    );
 
 const styles = StyleSheet.create({
   container: {

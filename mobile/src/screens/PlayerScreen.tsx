@@ -7,13 +7,11 @@ import type { RootStackParamList } from '../navigation/types';
 
 type PlayerScreenProps = NativeStackScreenProps<RootStackParamList, RootRoute.Player>;
 
-export function PlayerScreen({ route }: PlayerScreenProps): ReactElement {
-  return (
-    <PlaceholderScreen
-      eyebrow="Просмотр"
-      title="Плеер"
-      description="Базовое воспроизведение и собственные элементы управления появятся на следующих этапах."
-      detail={`Видео: ${route.params.videoId}`}
-    />
-  );
-}
+export const PlayerScreen = ({ route }: PlayerScreenProps): ReactElement => (
+  <PlaceholderScreen
+    eyebrow="Просмотр"
+    title="Плеер"
+    description="Базовое воспроизведение и собственные элементы управления появятся на следующих этапах."
+    detail={`Видео: ${route.params.videoId}`}
+  />
+);

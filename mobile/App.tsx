@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LINKING_OPTIONS } from './src/navigation/linking';
 import { RootNavigator } from './src/navigation/RootNavigator';
 
-function App() {
+const App = () => {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
@@ -16,6 +16,6 @@ function App() {
       </NavigationContainer>
     </SafeAreaProvider>
   );
-}
+};
 
 export default App;

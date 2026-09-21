@@ -4,11 +4,11 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { NAVIGATION_ICON_SIZE, NAVIGATION_ICON_STROKE_WIDTH } from './navigationIcon.constants';
 import type { NavigationIconProps } from './navigationIcon.types';
 
-export function SearchIcon({
+export const SearchIcon = ({
   color,
   focused,
   size = NAVIGATION_ICON_SIZE,
-}: NavigationIconProps): ReactElement {
+}: NavigationIconProps): ReactElement => {
   const strokeWidth = focused ? 2.3 : NAVIGATION_ICON_STROKE_WIDTH;
 
   return (
@@ -17,4 +17,4 @@ export function SearchIcon({
       <Path d="m16 16 4 4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
     </Svg>
   );
-}
+};

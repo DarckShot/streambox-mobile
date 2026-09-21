@@ -30,7 +30,7 @@ mobile/
 └── jest.config.js           # Jest
 ```
 
-Сейчас рабочий код находится в `components`, `constants`, `navigation` и `screens`. Остальные каталоги `src/` пока пусты и сохраняются с помощью `.gitkeep`; их назначение является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` удаляется.
+Сейчас рабочий код находится в `components`, `constants`, `navigation`, `screens` и `types`. Остальные каталоги `src/` пока пусты и сохраняются с помощью `.gitkeep`; их назначение является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` удаляется.
 
 ```text
 src/navigation/
@@ -44,6 +44,7 @@ src/navigation/
 
 src/screens/
 ├── HomeScreen.tsx
+├── HomeScreen.styles.ts
 ├── SearchScreen.tsx
 ├── FavoritesScreen.tsx
 ├── ProfileScreen.tsx
@@ -57,15 +58,24 @@ src/components/icons/
 ├── SearchIcon.tsx
 ├── FavoritesIcon.tsx
 ├── ProfileIcon.tsx
+├── VideoPlaceholderIcon.tsx
 ├── navigationIcon.constants.ts
 └── navigationIcon.types.ts
+
+src/components/video/
+├── VideoCard.tsx
+└── VideoCard.styles.ts
 
 src/components/placeholder/
 ├── PlaceholderScreen.tsx
 └── PlaceholderScreen.styles.ts
 
 src/constants/
-└── theme.ts                # Общие цвета интерфейса
+├── theme.ts                # Общие цвета интерфейса
+└── videoCatalog.ts         # Локальные mock-данные каталога
+
+src/types/
+└── video.ts                # Модель видео для UI-каталога
 ```
 
 Нативная точка входа Android использует package/application ID `com.streambox`. Обе платформы запускают React Native-модуль `StreamBox`, зарегистрированный в `index.js`, и принимают deep links со схемой `streambox://`.

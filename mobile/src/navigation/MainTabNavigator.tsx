@@ -1,6 +1,9 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {
+  createBottomTabNavigator,
+  type BottomTabNavigationOptions,
+} from '@react-navigation/bottom-tabs';
 import { useTheme } from '@react-navigation/native';
-import type { ReactElement } from 'react';
+import { useMemo, type ReactElement } from 'react';
 
 import { FavoritesIcon } from '../components/icons/FavoritesIcon';
 import { HomeIcon } from '../components/icons/HomeIcon';
@@ -23,43 +26,52 @@ const renderSearchIcon = createTabBarIcon(SearchIcon);
 const renderFavoritesIcon = createTabBarIcon(FavoritesIcon);
 const renderProfileIcon = createTabBarIcon(ProfileIcon);
 
-export function MainTabNavigator(): ReactElement {
+const HOME_OPTIONS: BottomTabNavigationOptions = {
+  tabBarLabel: 'Главная',
+  tabBarIcon: renderHomeIcon,
+};
+
+const SEARCH_OPTIONS: BottomTabNavigationOptions = {
+  tabBarLabel: 'Поиск',
+  tabBarIcon: renderSearchIcon,
+};
+
+const FAVORITES_OPTIONS: BottomTabNavigationOptions = {
+  tabBarLabel: 'Избранное',
+  tabBarIcon: renderFavoritesIcon,
+};
+
+const PROFILE_OPTIONS: BottomTabNavigationOptions = {
+  tabBarLabel: 'Профиль',
+  tabBarIcon: renderProfileIcon,
+};
+
+export const MainTabNavigator = (): ReactElement => {
   const { dark } = useTheme();
+  const screenOptions = useMemo<BottomTabNavigationOptions>(
+    () => ({
+      headerShown: false,
+      tabBarActiveTintColor: STREAMBOX_COLORS.accent,
+      tabBarInactiveTintColor: dark
+        ? STREAMBOX_COLORS.tabBarInactiveDark
+        : STREAMBOX_COLORS.tabBarInactiveLight,
+      tabBarHideOnKeyboard: true,
+      tabBarLabelStyle: styles.label,
+      tabBarStyle: [styles.tabBar, dark ? styles.tabBarDark : styles.tabBarLight],
+    }),
+    [dark],
+  );
 
   return (
-    <Tab.Navigator
-      initialRouteName={TabRoute.Home}
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: STREAMBOX_COLORS.accent,
-        tabBarInactiveTintColor: dark
-          ? STREAMBOX_COLORS.tabBarInactiveDark
-          : STREAMBOX_COLORS.tabBarInactiveLight,
-        tabBarHideOnKeyboard: true,
-        tabBarLabelStyle: styles.label,
-        tabBarStyle: [styles.tabBar, dark ? styles.tabBarDark : styles.tabBarLight],
-      }}
-    >
-      <Tab.Screen
-        name={TabRoute.Home}
-        component={HomeScreen}
-        options={{ tabBarLabel: 'Главная', tabBarIcon: renderHomeIcon }}
-      />
-      <Tab.Screen
-        name={TabRoute.Search}
-        component={SearchScreen}
-        options={{ tabBarLabel: 'Поиск', tabBarIcon: renderSearchIcon }}
-      />
+    <Tab.Navigator initialRouteName={TabRoute.Home} screenOptions={screenOptions}>
+      <Tab.Screen name={TabRoute.Home} component={HomeScreen} options={HOME_OPTIONS} />
+      <Tab.Screen name={TabRoute.Search} component={SearchScreen} options={SEARCH_OPTIONS} />
       <Tab.Screen
         name={TabRoute.Favorites}
         component={FavoritesScreen}
-        options={{ tabBarLabel: 'Избранное', tabBarIcon: renderFavoritesIcon }}
+        options={FAVORITES_OPTIONS}
       />
-      <Tab.Screen
-        name={TabRoute.Profile}
-        component={ProfileScreen}
-        options={{ tabBarLabel: 'Профиль', tabBarIcon: renderProfileIcon }}
-      />
+      <Tab.Screen name={TabRoute.Profile} component={ProfileScreen} options={PROFILE_OPTIONS} />
     </Tab.Navigator>
   );
-}
+};

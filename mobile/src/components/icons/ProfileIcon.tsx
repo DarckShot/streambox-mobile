@@ -4,11 +4,11 @@ import Svg, { Circle, Path } from 'react-native-svg';
 import { NAVIGATION_ICON_SIZE, NAVIGATION_ICON_STROKE_WIDTH } from './navigationIcon.constants';
 import type { NavigationIconProps } from './navigationIcon.types';
 
-export function ProfileIcon({
+export const ProfileIcon = ({
   color,
   focused,
   size = NAVIGATION_ICON_SIZE,
-}: NavigationIconProps): ReactElement {
+}: NavigationIconProps): ReactElement => {
   const strokeWidth = focused ? 2.3 : NAVIGATION_ICON_STROKE_WIDTH;
 
   return (
@@ -30,4 +30,4 @@ export function ProfileIcon({
       />
     </Svg>
   );
-}
+};

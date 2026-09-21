@@ -7,13 +7,11 @@ import type { RootStackParamList } from '../navigation/types';
 
 type VideoDetailsScreenProps = NativeStackScreenProps<RootStackParamList, RootRoute.VideoDetails>;
 
-export function VideoDetailsScreen({ route }: VideoDetailsScreenProps): ReactElement {
-  return (
-    <PlaceholderScreen
-      eyebrow="О видео"
-      title="Детали"
-      description="Описание, метаданные и переход к просмотру будут добавлены позже."
-      detail={`Видео: ${route.params.videoId}`}
-    />
-  );
-}
+export const VideoDetailsScreen = ({ route }: VideoDetailsScreenProps): ReactElement => (
+  <PlaceholderScreen
+    eyebrow="О видео"
+    title="Детали"
+    description="Описание, метаданные и переход к просмотру будут добавлены позже."
+    detail={`Видео: ${route.params.videoId}`}
+  />
+);
