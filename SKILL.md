@@ -91,6 +91,10 @@ Add a dependency only for a concrete requirement. Do not replace the selected st
 - Write source-code comments in Russian. Do not rewrite generated or third-party files merely to translate their comments.
 - Build user-facing UI with a coherent StreamBox visual style from the first implementation, including intentional loading, empty, and placeholder states; do not leave raw default-looking screens unless the user explicitly requests a technical prototype.
 
+## Temporary project modes
+
+If `.codex/UI_ONLY.md` exists, read it before changing project code and follow it as an active user instruction. Removing that file disables the mode without requiring changes to this skill.
+
 ## Workflow
 
 ### Commit-only requests
