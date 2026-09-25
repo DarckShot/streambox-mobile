@@ -6,4 +6,5 @@ export interface Video {
   thumbnailUrl: string;
   category: string;
   duration: string;
+  description: string;
 }

@@ -49,6 +49,7 @@ src/screens/
 ├── FavoritesScreen.tsx
 ├── ProfileScreen.tsx
 ├── VideoDetailsScreen.tsx
+├── VideoDetailsScreen.styles.ts
 ├── PlayerScreen.tsx
 ├── HistoryScreen.tsx
 └── SettingsScreen.tsx
@@ -57,6 +58,8 @@ src/components/icons/
 ├── HomeIcon.tsx
 ├── SearchIcon.tsx
 ├── FavoritesIcon.tsx
+├── HeartIcon.tsx
+├── PlayIcon.tsx
 ├── ProfileIcon.tsx
 ├── VideoPlaceholderIcon.tsx
 ├── navigationIcon.constants.ts
@@ -75,7 +78,7 @@ src/constants/
 └── videoCatalog.ts         # Локальные mock-данные каталога
 
 src/types/
-└── video.ts                # Модель видео для UI-каталога
+└── video.ts                # Модель видео для каталога и экрана деталей
 ```
 
 Нативная точка входа Android использует package/application ID `com.streambox`. Обе платформы запускают React Native-модуль `StreamBox`, зарегистрированный в `index.js`, и принимают deep links со схемой `streambox://`.

@@ -15,7 +15,7 @@ import type { RootStackParamList } from './types';
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const MAIN_OPTIONS: NativeStackNavigationOptions = { headerShown: false };
-const VIDEO_DETAILS_OPTIONS: NativeStackNavigationOptions = { title: 'Video Details' };
+const VIDEO_DETAILS_OPTIONS: NativeStackNavigationOptions = { title: 'О видео' };
 const PLAYER_OPTIONS: NativeStackNavigationOptions = { title: 'Player' };
 const HISTORY_OPTIONS: NativeStackNavigationOptions = { title: 'History' };
 const SETTINGS_OPTIONS: NativeStackNavigationOptions = { title: 'Settings' };
