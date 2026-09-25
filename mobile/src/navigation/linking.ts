@@ -18,7 +18,6 @@ export const LINKING_CONFIG = {
       },
     },
     [RootRoute.VideoDetails]: ROUTE_PATHS.VIDEO_DETAILS,
-    [RootRoute.Player]: ROUTE_PATHS.PLAYER,
     [RootRoute.History]: ROUTE_PATHS.HISTORY,
     [RootRoute.Settings]: ROUTE_PATHS.SETTINGS,
   },

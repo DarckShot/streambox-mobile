@@ -6,52 +6,29 @@ export const videoDetailsScreenStyles = StyleSheet.create({
   screen: {
     flex: 1,
   },
-  content: {
-    flexGrow: 1,
-    paddingBottom: 40,
+  screenLandscape: {
+    flexDirection: 'row',
   },
-  cover: {
-    aspectRatio: 16 / 9,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    backgroundColor: '#22202E',
-  },
-  coverFallback: {
-    alignItems: 'center',
-    gap: 10,
-  },
-  coverFallbackText: {
-    color: '#77738D',
-    fontSize: 11,
-    fontWeight: '800',
-    letterSpacing: 1.8,
-  },
-  coverImage: {
-    position: 'absolute',
+  playerPortrait: {
     width: '100%',
+    aspectRatio: undefined,
+  },
+  playerLandscape: {
+    width: '58%',
     height: '100%',
-  },
-  durationBadge: {
-    position: 'absolute',
-    right: 18,
-    bottom: 16,
-    borderCurve: 'continuous',
-    borderRadius: 9,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(10, 9, 15, 0.84)',
-  },
-  durationText: {
-    color: STREAMBOX_COLORS.white,
-    fontSize: 13,
-    fontWeight: '800',
-    fontVariant: ['tabular-nums'],
+    aspectRatio: undefined,
   },
   details: {
+    flex: 1,
     gap: 22,
     paddingHorizontal: 20,
     paddingTop: 24,
+    paddingBottom: 20,
+  },
+  detailsCompact: {
+    gap: 6,
+    paddingTop: 8,
+    paddingBottom: 8,
   },
   categoryRow: {
     flexDirection: 'row',
@@ -77,6 +54,11 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: -0.8,
     lineHeight: 37,
+  },
+  titleCompact: {
+    fontSize: 21,
+    letterSpacing: -0.4,
+    lineHeight: 25,
   },
   metaRow: {
     flexDirection: 'row',
@@ -105,14 +87,25 @@ export const videoDetailsScreenStyles = StyleSheet.create({
   descriptionBlock: {
     gap: 10,
   },
+  descriptionBlockCompact: {
+    gap: 4,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '800',
     letterSpacing: -0.2,
   },
+  sectionTitleCompact: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
   description: {
     fontSize: 16,
     lineHeight: 25,
+  },
+  descriptionCompact: {
+    fontSize: 13,
+    lineHeight: 18,
   },
   textDark: {
     color: STREAMBOX_COLORS.descriptionDark,
@@ -121,24 +114,9 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     color: STREAMBOX_COLORS.descriptionLight,
   },
   actions: {
+    marginTop: 'auto',
     gap: 12,
     paddingTop: 8,
-  },
-  primaryButton: {
-    minHeight: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderCurve: 'continuous',
-    borderRadius: 17,
-    paddingHorizontal: 20,
-    backgroundColor: STREAMBOX_COLORS.accent,
-  },
-  primaryButtonText: {
-    color: STREAMBOX_COLORS.white,
-    fontSize: 16,
-    fontWeight: '800',
   },
   secondaryButton: {
     minHeight: 54,
@@ -150,6 +128,10 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     borderCurve: 'continuous',
     borderRadius: 17,
     paddingHorizontal: 20,
+  },
+  secondaryButtonCompact: {
+    minHeight: 42,
+    borderRadius: 14,
   },
   secondaryButtonDark: {
     backgroundColor: STREAMBOX_COLORS.cardDark,
@@ -210,5 +192,19 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 23,
     textAlign: 'center',
+  },
+  errorBackButton: {
+    minHeight: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderCurve: 'continuous',
+    borderRadius: 17,
+    paddingHorizontal: 20,
+    backgroundColor: STREAMBOX_COLORS.accent,
+  },
+  errorBackButtonText: {
+    color: STREAMBOX_COLORS.white,
+    fontSize: 16,
+    fontWeight: '800',
   },
 });

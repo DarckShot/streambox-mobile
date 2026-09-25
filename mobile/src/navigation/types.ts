@@ -9,7 +9,6 @@ export type VideoRouteParams = {
 export type RootStackParamList = {
   [RootRoute.Main]: NavigatorScreenParams<MainTabParamList> | undefined;
   [RootRoute.VideoDetails]: VideoRouteParams;
-  [RootRoute.Player]: VideoRouteParams;
   [RootRoute.History]: undefined;
   [RootRoute.Settings]: undefined;
 };

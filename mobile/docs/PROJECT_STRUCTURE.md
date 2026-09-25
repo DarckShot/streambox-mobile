@@ -5,7 +5,7 @@ mobile/
 ├── android/                 # Нативный Android-проект
 ├── ios/                     # Нативный iOS-проект
 ├── src/                     # Прикладной TypeScript-код
-│   ├── api/                 # Будущий API-слой
+│   ├── api/                 # Запросы к внешним API
 │   ├── assets/
 │   │   ├── icons/           # Иконки
 │   │   └── images/          # Изображения
@@ -30,7 +30,7 @@ mobile/
 └── jest.config.js           # Jest
 ```
 
-Сейчас рабочий код находится в `components`, `constants`, `navigation`, `screens` и `types`. Остальные каталоги `src/` пока пусты и сохраняются с помощью `.gitkeep`; их назначение является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` удаляется.
+Сейчас рабочий код находится в `api`, `components`, `constants`, `hooks`, `navigation`, `screens` и `types`. Остальные каталоги `src/` пока пусты и сохраняются с помощью `.gitkeep`; их назначение является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` удаляется.
 
 ```text
 src/navigation/
@@ -50,24 +50,34 @@ src/screens/
 ├── ProfileScreen.tsx
 ├── VideoDetailsScreen.tsx
 ├── VideoDetailsScreen.styles.ts
-├── PlayerScreen.tsx
 ├── HistoryScreen.tsx
 └── SettingsScreen.tsx
 
 src/components/icons/
+├── FullscreenIcon.tsx
 ├── HomeIcon.tsx
 ├── SearchIcon.tsx
 ├── FavoritesIcon.tsx
 ├── HeartIcon.tsx
+├── PauseIcon.tsx
 ├── PlayIcon.tsx
 ├── ProfileIcon.tsx
 ├── VideoPlaceholderIcon.tsx
+├── VolumeIcon.tsx
 ├── navigationIcon.constants.ts
 └── navigationIcon.types.ts
 
 src/components/video/
 ├── VideoCard.tsx
 └── VideoCard.styles.ts
+
+src/components/player/
+├── BasicVideoPlayer.tsx
+├── BasicVideoPlayer.styles.ts
+├── RutubeVideoPlayer.tsx
+├── RutubeVideoPlayer.styles.ts
+├── VideoControls.tsx
+└── VideoControls.styles.ts
 
 src/components/placeholder/
 ├── PlaceholderScreen.tsx
@@ -77,8 +87,22 @@ src/constants/
 ├── theme.ts                # Общие цвета интерфейса
 └── videoCatalog.ts         # Локальные mock-данные каталога
 
+src/api/
+└── rutube.ts               # Получение временного URL видеопотока RUTUBE
+
+src/hooks/
+├── usePlayerControls.ts    # Автоматическое скрытие панели управления
+├── usePlayerFullscreen.ts  # Fullscreen и реакция на ориентацию экрана
+├── useRutubePlayer.reducer.ts # Локальные переходы состояния плеера
+└── useRutubePlayer.ts      # Загрузка потока и жизненный цикл воспроизведения
+
 src/types/
+├── player.ts               # Состояния базового плеера
+├── rutube.ts               # Минимальный контракт ответа RUTUBE
 └── video.ts                # Модель видео для каталога и экрана деталей
+
+src/utils/
+└── formatPlaybackTime.ts   # Форматирование времени плеера
 ```
 
 Нативная точка входа Android использует package/application ID `com.streambox`. Обе платформы запускают React Native-модуль `StreamBox`, зарегистрированный в `index.js`, и принимают deep links со схемой `streambox://`.

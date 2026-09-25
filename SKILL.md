@@ -90,6 +90,7 @@ Add a dependency only for a concrete requirement. Do not replace the selected st
 - Do not use `as const` when ordinary inference or an explicit type can express the requirement without it. Use it only when literal narrowing is genuinely necessary.
 - Write all project-authored JavaScript and TypeScript functions, including React components, as arrow functions. This does not apply to generated, third-party, or native-language code.
 - For a memoized component, declare a named arrow component and export the memoized result as the default export: `const Component = ...; export default memo(Component);`. Do not use `memo(function Component() ...)`.
+- Group long custom-hook contracts by responsibility, such as `state`, `actions`, and external event handlers. Keep short, cohesive hook results flat rather than adding nesting without a readability benefit.
 - Write new code with performance-appropriate defaults. Use the React Native performance skills for optimization decisions, preserve readability, and require profiling evidence before speculative memoization, dependency additions, or architecture changes.
 - Write source-code comments in Russian. Do not rewrite generated or third-party files merely to translate their comments.
 - Build user-facing UI with a coherent StreamBox visual style from the first implementation, including intentional loading, empty, and placeholder states; do not leave raw default-looking screens unless the user explicitly requests a technical prototype.
