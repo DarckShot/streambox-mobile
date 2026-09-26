@@ -28,6 +28,16 @@ describe('rutubePlayerReducer', () => {
     expect(afterEnd.currentTime).toBe(120);
   });
 
+  it('сохраняет текущее время, если поток ещё не сообщил длительность', () => {
+    const state = createReadyState({ duration: 0 });
+    const progressed = rutubePlayerReducer(state, {
+      type: 'progressChanged',
+      currentTime: 18,
+    });
+
+    expect(progressed.currentTime).toBe(18);
+  });
+
   it('возвращает ended-плеер в paused после перемотки назад', () => {
     const endedState = rutubePlayerReducer(
       createReadyState({ currentTime: 118, isPaused: false, status: 'playing' }),

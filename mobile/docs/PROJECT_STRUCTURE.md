@@ -77,6 +77,8 @@ src/components/player/
 ├── BasicVideoPlayer.styles.ts
 ├── RutubeVideoPlayer.tsx
 ├── RutubeVideoPlayer.styles.ts
+├── RutubePlayerMedia.tsx
+├── RutubePlayerPresentation.tsx
 ├── VideoControlButton.tsx
 ├── VideoControls.tsx
 ├── VideoControls.styles.ts
@@ -96,10 +98,18 @@ src/api/
 └── rutube.ts               # Получение временного URL видеопотока RUTUBE
 
 src/hooks/
-├── usePlayerControls.ts    # Автоматическое скрытие панели управления
+├── useInitialPlaybackResume.ts # Однократное восстановление позиции
+├── usePlayerControls.ts    # Видимость панели управления
 ├── usePlayerFullscreen.ts  # Fullscreen и реакция на ориентацию экрана
 ├── useRutubePlayer.reducer.ts # Локальные переходы состояния плеера
-└── useRutubePlayer.ts      # Загрузка потока и жизненный цикл воспроизведения
+├── useRutubePlayer.ts      # Загрузка потока и жизненный цикл воспроизведения
+├── useRutubeVideoPlayback.ts # Связь плеера, прогресса и fullscreen
+├── useVideoPlaybackActions.ts # Play/pause, retry и seek
+├── useVideoPlaybackEvents.ts # События медиа и обновление прогресса
+└── useVideoProgress.ts     # Сохранение и восстановление позиции
+
+src/storage/
+└── videoProgress.ts        # Постоянное хранение прогресса по videoId
 
 src/types/
 ├── player.ts               # Состояния базового плеера

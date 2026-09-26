@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, useWindowDimensions } from 'react-native';
 
 interface PlayerFullscreenState {
-  inlineStartPosition: number;
+  inlineStartPosition: number | null;
   modalStartPosition: number;
   mounted: boolean;
   visible: boolean;
@@ -33,7 +33,7 @@ export const usePlayerFullscreen = (
   const landscapeDismissedRef = useRef(false);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [fullscreenMounted, setFullscreenMounted] = useState(false);
-  const [inlineStartPosition, setInlineStartPosition] = useState(0);
+  const [inlineStartPosition, setInlineStartPosition] = useState<number | null>(null);
   const [modalStartPosition, setModalStartPosition] = useState(0);
 
   currentTimeRef.current = currentTime;

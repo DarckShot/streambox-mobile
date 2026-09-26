@@ -79,7 +79,9 @@ export const VideoDetailsScreen = ({
       <RutubeVideoPlayer
         containerStyle={isLandscape ? styles.playerLandscape : portraitPlayerStyle}
         externalId={video.externalId}
+        key={video.id}
         posterUrl={video.thumbnailUrl}
+        videoId={video.id}
       />
 
       <ScrollView
