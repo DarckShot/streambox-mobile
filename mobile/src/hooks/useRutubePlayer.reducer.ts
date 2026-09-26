@@ -1,4 +1,5 @@
 import type { BasicVideoPlayerStatus } from '../types/player';
+import { clampPlaybackTime } from '../utils/clampPlaybackTime';
 
 export interface RutubePlayerState {
   currentTime: number;
@@ -96,7 +97,7 @@ export const rutubePlayerReducer = (
     case 'mediaLoaded':
       return {
         ...state,
-        currentTime: action.currentTime,
+        currentTime: clampPlaybackTime(action.currentTime, action.duration),
         duration: action.duration,
         status: state.isPaused ? 'idle' : 'playing',
       };
@@ -104,7 +105,7 @@ export const rutubePlayerReducer = (
     case 'progressChanged':
       return {
         ...state,
-        currentTime: action.currentTime,
+        currentTime: clampPlaybackTime(action.currentTime, state.duration),
       };
 
     case 'bufferChanged':
@@ -125,11 +126,15 @@ export const rutubePlayerReducer = (
         status: 'ended',
       };
 
-    case 'seekRequested':
+    case 'seekRequested': {
+      const nextTime = clampPlaybackTime(action.currentTime, state.duration);
+
       return {
         ...state,
-        currentTime: action.currentTime,
+        currentTime: nextTime,
+        status: state.status === 'ended' && nextTime < state.duration ? 'paused' : state.status,
       };
+    }
 
     case 'mutePressed':
       return {

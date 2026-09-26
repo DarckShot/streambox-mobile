@@ -62,6 +62,7 @@ src/components/icons/
 ├── PauseIcon.tsx
 ├── PlayIcon.tsx
 ├── ProfileIcon.tsx
+├── SeekIcon.tsx
 ├── VideoPlaceholderIcon.tsx
 ├── VolumeIcon.tsx
 ├── navigationIcon.constants.ts
@@ -76,14 +77,18 @@ src/components/player/
 ├── BasicVideoPlayer.styles.ts
 ├── RutubeVideoPlayer.tsx
 ├── RutubeVideoPlayer.styles.ts
+├── VideoControlButton.tsx
 ├── VideoControls.tsx
-└── VideoControls.styles.ts
+├── VideoControls.styles.ts
+├── useVideoControlActions.ts
+└── useVideoTimeline.ts
 
 src/components/placeholder/
 ├── PlaceholderScreen.tsx
 └── PlaceholderScreen.styles.ts
 
 src/constants/
+├── player.ts               # Настройки управления плеером
 ├── theme.ts                # Общие цвета интерфейса
 └── videoCatalog.ts         # Локальные mock-данные каталога
 
@@ -102,6 +107,7 @@ src/types/
 └── video.ts                # Модель видео для каталога и экрана деталей
 
 src/utils/
+├── clampPlaybackTime.ts    # Ограничение позиции границами видео
 └── formatPlaybackTime.ts   # Форматирование времени плеера
 ```
 

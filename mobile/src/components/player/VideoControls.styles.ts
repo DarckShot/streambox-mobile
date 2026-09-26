@@ -68,6 +68,9 @@ export const videoControlsStyles = StyleSheet.create({
   iconButtonPressed: {
     backgroundColor: 'rgba(255, 255, 255, 0.14)',
   },
+  iconButtonDisabled: {
+    opacity: 0.35,
+  },
   time: {
     flex: 1,
     color: STREAMBOX_COLORS.white,

@@ -1,7 +1,7 @@
 import { useTheme } from '@react-navigation/native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useMemo, type ReactElement } from 'react';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { useMemo, useState, type ReactElement } from 'react';
+import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { HeartIcon } from '../components/icons/HeartIcon';
@@ -25,6 +25,9 @@ export const VideoDetailsScreen = ({
   const { height, width } = useWindowDimensions();
   const isLandscape = width > height;
   const isCompact = height < 760 || isLandscape;
+  const titleLineLimit = isCompact ? 1 : 2;
+  const [isTitleExpanded, setIsTitleExpanded] = useState(false);
+  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
   const playerHeight = Math.min(width * (9 / 16), height * 0.29);
   const portraitPlayerStyle = useMemo(
     () => [styles.playerPortrait, { height: playerHeight }],
@@ -79,19 +82,46 @@ export const VideoDetailsScreen = ({
         posterUrl={video.thumbnailUrl}
       />
 
-      <View style={[styles.details, isCompact ? styles.detailsCompact : null]}>
+      <ScrollView
+        style={styles.detailsScroll}
+        contentContainerStyle={[styles.details, isCompact ? styles.detailsCompact : null]}
+      >
         <View style={styles.categoryRow}>
           <View style={styles.categoryMark} />
           <Text style={styles.category}>{video.category}</Text>
         </View>
 
-        <Text
-          ellipsizeMode="tail"
-          numberOfLines={isCompact ? 1 : 2}
-          style={[styles.title, isCompact ? styles.titleCompact : null, { color: colors.text }]}
-        >
-          {video.title}
-        </Text>
+        <View style={styles.titleBlock}>
+          <Text
+            accessible={false}
+            importantForAccessibility="no"
+            onTextLayout={(event) => {
+              setIsTitleOverflowing(event.nativeEvent.lines.length > titleLineLimit);
+            }}
+            style={[styles.title, isCompact ? styles.titleCompact : null, styles.titleMeasure]}
+          >
+            {video.title}
+          </Text>
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={isTitleExpanded ? undefined : titleLineLimit}
+            style={[styles.title, isCompact ? styles.titleCompact : null, { color: colors.text }]}
+          >
+            {video.title}
+          </Text>
+          {isTitleOverflowing ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityState={{ expanded: isTitleExpanded }}
+              onPress={() => setIsTitleExpanded((expanded) => !expanded)}
+              style={styles.titleToggle}
+            >
+              <Text style={styles.titleToggleText}>
+                {isTitleExpanded ? 'Свернуть' : 'Показать полностью'}
+              </Text>
+            </Pressable>
+          ) : null}
+        </View>
 
         <View style={styles.metaRow}>
           <Text style={[styles.metaLabel, dark ? styles.textDark : styles.textLight]}>
@@ -141,7 +171,7 @@ export const VideoDetailsScreen = ({
             <Text style={[styles.secondaryButtonText, { color: colors.text }]}>В избранное</Text>
           </Pressable>
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 };

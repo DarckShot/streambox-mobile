@@ -1,5 +1,5 @@
-import { useIsFocused } from '@react-navigation/native';
-import { memo, useCallback, useRef, type ReactElement } from 'react';
+import { useIsFocused, usePreventRemove } from '@react-navigation/native';
+import { memo, useCallback, useMemo, useRef, type ReactElement } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { Modal, Pressable, StatusBar, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import Video, { ResizeMode, type OnLoadData, type VideoRef } from 'react-native-
 import { usePlayerFullscreen } from '../../hooks/usePlayerFullscreen';
 import { usePlayerControls } from '../../hooks/usePlayerControls';
 import { useRutubePlayer } from '../../hooks/useRutubePlayer';
+import { clampPlaybackTime } from '../../utils/clampPlaybackTime';
 import BasicVideoPlayer from './BasicVideoPlayer';
 import { rutubeVideoPlayerStyles as styles } from './RutubeVideoPlayer.styles';
 import VideoControls from './VideoControls';
@@ -30,21 +31,41 @@ const RutubeVideoPlayer = ({
     state: player,
     videoEvents,
   } = useRutubePlayer(externalId, isFocused);
-  const { actions: controlsActions, state: controls } = usePlayerControls(
-    player.hasStarted,
-    player.isPaused,
-  );
+  const canShowControls = player.hasStarted && player.status !== 'ended';
+  const { actions: controlsActions, state: controls } = usePlayerControls(canShowControls);
   const { actions: fullscreenActions, state: fullscreen } = usePlayerFullscreen(
     player.currentTime,
     player.hasStarted && isFocused,
   );
+  usePreventRemove(fullscreen.mounted, fullscreenActions.close);
+  const startPosition = fullscreen.mounted
+    ? fullscreen.modalStartPosition
+    : fullscreen.inlineStartPosition;
+  const videoSource = useMemo(
+    () => ({ uri: player.playbackUrl ?? undefined, startPosition }),
+    [player.playbackUrl, startPosition],
+  );
+
+  const handlePlaybackPress = useCallback((): void => {
+    if (player.status === 'ended') {
+      fullscreenActions.resetStartPosition();
+    }
+
+    playerActions.togglePlayback();
+  }, [fullscreenActions, player.status, playerActions]);
+
+  const handleRetryPress = useCallback((): void => {
+    fullscreenActions.resetStartPosition();
+    playerActions.retry();
+  }, [fullscreenActions, playerActions]);
 
   const handleSeek = useCallback(
     (time: number): void => {
-      videoRef.current?.seek(time);
-      playerActions.seek(time);
+      const nextTime = clampPlaybackTime(time, player.duration);
+      videoRef.current?.seek(nextTime);
+      playerActions.seek(nextTime);
     },
-    [playerActions],
+    [player.duration, playerActions],
   );
 
   const handleVideoLoad = useCallback(
@@ -77,11 +98,11 @@ const RutubeVideoPlayer = ({
           resizeMode: fullscreen.mounted ? ResizeMode.CONTAIN : ResizeMode.COVER,
         }}
         resizeMode={fullscreen.mounted ? ResizeMode.CONTAIN : ResizeMode.COVER}
-        source={{ uri: player.playbackUrl }}
+        source={videoSource}
         style={styles.video}
       />
 
-      {player.hasStarted ? (
+      {canShowControls ? (
         <Pressable
           accessibilityLabel={controls.visible ? 'Скрыть управление' : 'Показать управление'}
           accessibilityRole="button"
@@ -90,7 +111,7 @@ const RutubeVideoPlayer = ({
         />
       ) : null}
 
-      {controls.visible && player.hasStarted ? (
+      {controls.visible && canShowControls ? (
         <VideoControls
           currentTime={player.currentTime}
           duration={player.duration}
@@ -100,7 +121,7 @@ const RutubeVideoPlayer = ({
           onFullscreenPress={fullscreenActions.toggle}
           onInteraction={controlsActions.show}
           onMutePress={playerActions.toggleMute}
-          onPlaybackPress={playerActions.togglePlayback}
+          onPlaybackPress={handlePlaybackPress}
           onSeek={handleSeek}
           onSeekStart={controlsActions.keepVisible}
         />
@@ -114,8 +135,8 @@ const RutubeVideoPlayer = ({
         containerStyle={containerStyle}
         errorDescription={player.errorMessage ?? 'Не удалось получить ссылку на видеопоток.'}
         media={fullscreen.mounted ? undefined : playerSurface}
-        onErrorActionPress={playerActions.retry}
-        onPlaybackPress={playerActions.togglePlayback}
+        onErrorActionPress={handleRetryPress}
+        onPlaybackPress={handlePlaybackPress}
         posterUrl={posterUrl}
         status={player.status}
       />
@@ -123,14 +144,25 @@ const RutubeVideoPlayer = ({
       <Modal
         animationType="none"
         onDismiss={fullscreenActions.handleDismiss}
-        onRequestClose={fullscreenActions.toggle}
+        onRequestClose={fullscreenActions.close}
+        navigationBarTranslucent
         presentationStyle="fullScreen"
         statusBarTranslucent
         supportedOrientations={['portrait', 'landscape-left', 'landscape-right']}
         visible={fullscreen.visible}
       >
         <StatusBar hidden />
-        <SafeAreaProvider style={styles.fullscreen}>{playerSurface}</SafeAreaProvider>
+        <SafeAreaProvider style={styles.fullscreen}>
+          <BasicVideoPlayer
+            containerStyle={styles.fullscreenFrame}
+            errorDescription={player.errorMessage ?? 'Не удалось получить ссылку на видеопоток.'}
+            media={playerSurface}
+            onErrorActionPress={handleRetryPress}
+            onPlaybackPress={handlePlaybackPress}
+            posterUrl={posterUrl}
+            status={player.status}
+          />
+        </SafeAreaProvider>
       </Modal>
     </>
   );

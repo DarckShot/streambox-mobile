@@ -2,13 +2,17 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, useWindowDimensions } from 'react-native';
 
 interface PlayerFullscreenState {
+  inlineStartPosition: number;
+  modalStartPosition: number;
   mounted: boolean;
   visible: boolean;
 }
 
 interface PlayerFullscreenActions {
+  close: () => void;
   consumeRestorePosition: () => number | null;
   handleDismiss: () => void;
+  resetStartPosition: () => void;
   toggle: () => void;
 }
 
@@ -29,6 +33,8 @@ export const usePlayerFullscreen = (
   const landscapeDismissedRef = useRef(false);
   const [fullscreenVisible, setFullscreenVisible] = useState(false);
   const [fullscreenMounted, setFullscreenMounted] = useState(false);
+  const [inlineStartPosition, setInlineStartPosition] = useState(0);
+  const [modalStartPosition, setModalStartPosition] = useState(0);
 
   currentTimeRef.current = currentTime;
 
@@ -39,13 +45,19 @@ export const usePlayerFullscreen = (
 
   const openFullscreen = useCallback((): void => {
     prepareTransition();
+    setModalStartPosition(Math.round(restorePositionRef.current * 1000));
     setFullscreenMounted(true);
     setFullscreenVisible(true);
   }, [prepareTransition]);
 
   const closeFullscreen = useCallback(
     (manual: boolean): void => {
+      if (!fullscreenVisible) {
+        return;
+      }
+
       prepareTransition();
+      setInlineStartPosition(Math.round(restorePositionRef.current * 1000));
 
       if (manual && isLandscape) {
         landscapeDismissedRef.current = true;
@@ -57,16 +69,20 @@ export const usePlayerFullscreen = (
         setFullscreenMounted(false);
       }
     },
-    [isLandscape, prepareTransition],
+    [fullscreenVisible, isLandscape, prepareTransition],
   );
 
   const toggleFullscreen = useCallback((): void => {
-    if (fullscreenMounted) {
+    if (fullscreenVisible) {
       closeFullscreen(true);
-    } else {
+    } else if (!fullscreenMounted) {
       openFullscreen();
     }
-  }, [closeFullscreen, fullscreenMounted, openFullscreen]);
+  }, [closeFullscreen, fullscreenMounted, fullscreenVisible, openFullscreen]);
+
+  const exitFullscreen = useCallback((): void => {
+    closeFullscreen(true);
+  }, [closeFullscreen]);
 
   const handleFullscreenDismiss = useCallback((): void => {
     setFullscreenMounted(false);
@@ -79,6 +95,13 @@ export const usePlayerFullscreen = (
 
     shouldRestorePositionRef.current = false;
     return restorePositionRef.current;
+  }, []);
+
+  const resetStartPosition = useCallback((): void => {
+    restorePositionRef.current = 0;
+    shouldRestorePositionRef.current = false;
+    setInlineStartPosition(0);
+    setModalStartPosition(0);
   }, []);
 
   useEffect(() => {
@@ -100,16 +123,26 @@ export const usePlayerFullscreen = (
 
   const actions = useMemo<PlayerFullscreenActions>(
     () => ({
+      close: exitFullscreen,
       consumeRestorePosition,
       handleDismiss: handleFullscreenDismiss,
+      resetStartPosition,
       toggle: toggleFullscreen,
     }),
-    [consumeRestorePosition, handleFullscreenDismiss, toggleFullscreen],
+    [
+      consumeRestorePosition,
+      exitFullscreen,
+      handleFullscreenDismiss,
+      resetStartPosition,
+      toggleFullscreen,
+    ],
   );
 
   return {
     actions,
     state: {
+      inlineStartPosition,
+      modalStartPosition,
       mounted: fullscreenMounted,
       visible: fullscreenVisible,
     },

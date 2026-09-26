@@ -5,6 +5,10 @@ export const rutubeVideoPlayerStyles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#000000',
   },
+  fullscreenFrame: {
+    flex: 1,
+    aspectRatio: undefined,
+  },
   media: {
     ...StyleSheet.absoluteFillObject,
   },

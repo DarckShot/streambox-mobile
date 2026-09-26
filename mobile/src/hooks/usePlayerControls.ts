@@ -1,6 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-const CONTROLS_HIDE_DELAY = 3000;
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 interface PlayerControlsState {
   visible: boolean;
@@ -17,66 +15,28 @@ interface UsePlayerControlsResult {
   state: PlayerControlsState;
 }
 
-export const usePlayerControls = (
-  hasStarted: boolean,
-  isPaused: boolean,
-): UsePlayerControlsResult => {
+export const usePlayerControls = (hasStarted: boolean): UsePlayerControlsResult => {
   const [controlsVisible, setControlsVisible] = useState(false);
-  const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const clearHideTimer = useCallback((): void => {
-    if (hideTimerRef.current) {
-      clearTimeout(hideTimerRef.current);
-      hideTimerRef.current = null;
-    }
-  }, []);
-
-  const hideControls = useCallback((): void => {
-    clearHideTimer();
-    setControlsVisible(false);
-  }, [clearHideTimer]);
-
-  const keepControlsVisible = useCallback((): void => {
-    clearHideTimer();
-    setControlsVisible(true);
-  }, [clearHideTimer]);
 
   const showControls = useCallback((): void => {
-    clearHideTimer();
     setControlsVisible(true);
-
-    if (!isPaused) {
-      hideTimerRef.current = setTimeout(() => {
-        setControlsVisible(false);
-      }, CONTROLS_HIDE_DELAY);
-    }
-  }, [clearHideTimer, isPaused]);
+  }, []);
 
   const toggleControls = useCallback((): void => {
-    if (controlsVisible) {
-      hideControls();
-    } else {
-      showControls();
-    }
-  }, [controlsVisible, hideControls, showControls]);
+    setControlsVisible((visible) => !visible);
+  }, []);
 
   useEffect(() => {
-    if (!hasStarted) {
-      hideControls();
-    } else {
-      showControls();
-    }
-
-    return clearHideTimer;
-  }, [clearHideTimer, hasStarted, hideControls, isPaused, showControls]);
+    setControlsVisible(hasStarted);
+  }, [hasStarted]);
 
   const actions = useMemo<PlayerControlsActions>(
     () => ({
-      keepVisible: keepControlsVisible,
+      keepVisible: showControls,
       show: showControls,
       toggle: toggleControls,
     }),
-    [keepControlsVisible, showControls, toggleControls],
+    [showControls, toggleControls],
   );
 
   return {

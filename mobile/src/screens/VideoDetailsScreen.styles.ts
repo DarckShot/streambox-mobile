@@ -18,8 +18,11 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     height: '100%',
     aspectRatio: undefined,
   },
-  details: {
+  detailsScroll: {
     flex: 1,
+  },
+  details: {
+    flexGrow: 1,
     gap: 22,
     paddingHorizontal: 20,
     paddingTop: 24,
@@ -59,6 +62,24 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     fontSize: 21,
     letterSpacing: -0.4,
     lineHeight: 25,
+  },
+  titleBlock: {
+    width: '100%',
+  },
+  titleMeasure: {
+    position: 'absolute',
+    width: '100%',
+    opacity: 0,
+  },
+  titleToggle: {
+    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    minHeight: 40,
+  },
+  titleToggleText: {
+    color: STREAMBOX_COLORS.accent,
+    fontSize: 14,
+    fontWeight: '700',
   },
   metaRow: {
     flexDirection: 'row',
