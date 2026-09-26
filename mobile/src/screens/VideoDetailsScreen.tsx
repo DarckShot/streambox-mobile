@@ -4,11 +4,10 @@ import { useMemo, useState, type ReactElement } from 'react';
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { HeartIcon } from '../components/icons/HeartIcon';
+import { FavoriteToggleButton } from '../components/favorites/FavoriteToggleButton';
 import { VideoPlaceholderIcon } from '../components/icons/VideoPlaceholderIcon';
 import RutubeVideoPlayer from '../components/player/RutubeVideoPlayer';
 import { VIDEO_CATALOG } from '../constants/videoCatalog';
-import { STREAMBOX_COLORS } from '../constants/theme';
 import { RootRoute } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import { videoDetailsScreenStyles as styles } from './VideoDetailsScreen.styles';
@@ -35,10 +34,6 @@ export const VideoDetailsScreen = ({
   );
 
   const video = VIDEO_CATALOG.find((item) => item.id === route.params.videoId);
-
-  const handleFavoritePress = (): void => {
-    // Здесь пользователь позже подключит логику избранного.
-  };
 
   if (!video) {
     return (
@@ -158,20 +153,12 @@ export const VideoDetailsScreen = ({
         </View>
 
         <View style={styles.actions}>
-          <Pressable
-            accessibilityHint="Функция избранного будет подключена позже"
-            accessibilityRole="button"
-            onPress={handleFavoritePress}
-            style={({ pressed }) => [
-              styles.secondaryButton,
-              isCompact ? styles.secondaryButtonCompact : null,
-              dark ? styles.secondaryButtonDark : styles.secondaryButtonLight,
-              pressed ? styles.buttonPressed : null,
-            ]}
-          >
-            <HeartIcon color={STREAMBOX_COLORS.accent} />
-            <Text style={[styles.secondaryButtonText, { color: colors.text }]}>В избранное</Text>
-          </Pressable>
+          <FavoriteToggleButton
+            compact={isCompact}
+            isDark={dark}
+            textColor={colors.text}
+            videoId={video.id}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>

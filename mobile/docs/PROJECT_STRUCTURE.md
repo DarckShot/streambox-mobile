@@ -30,7 +30,7 @@ mobile/
 └── jest.config.js           # Jest
 ```
 
-Сейчас рабочий код находится в `api`, `components`, `constants`, `hooks`, `navigation`, `screens` и `types`. Остальные каталоги `src/` пока пусты и сохраняются с помощью `.gitkeep`; их назначение является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` удаляется.
+Сейчас рабочий код находится в `api`, `components`, `constants`, `hooks`, `navigation`, `screens`, `storage`, `store`, `types` и `utils`. Остальные каталоги `src/` пока пусты и сохраняются с помощью `.gitkeep`; их назначение является целевой организацией кода. После добавления первого рабочего файла соответствующий `.gitkeep` удаляется.
 
 ```text
 src/navigation/
@@ -47,6 +47,7 @@ src/screens/
 ├── HomeScreen.styles.ts
 ├── SearchScreen.tsx
 ├── FavoritesScreen.tsx
+├── FavoritesScreen.styles.ts
 ├── ProfileScreen.tsx
 ├── VideoDetailsScreen.tsx
 ├── VideoDetailsScreen.styles.ts
@@ -71,6 +72,10 @@ src/components/icons/
 src/components/video/
 ├── VideoCard.tsx
 └── VideoCard.styles.ts
+
+src/components/favorites/
+├── FavoriteToggleButton.tsx
+└── FavoriteToggleButton.styles.ts
 
 src/components/player/
 ├── BasicVideoPlayer.tsx
@@ -109,7 +114,11 @@ src/hooks/
 └── useVideoProgress.ts     # Сохранение и восстановление позиции
 
 src/storage/
+├── favorites.ts            # Постоянное хранение уникальных ID избранных видео
 └── videoProgress.ts        # Постоянное хранение прогресса по videoId
+
+src/store/
+└── useFavoritesStore.ts    # Общее состояние избранного для двух экранов
 
 src/types/
 ├── player.ts               # Состояния базового плеера

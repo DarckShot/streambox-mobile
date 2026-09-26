@@ -1,5 +1,7 @@
 export const STREAMBOX_COLORS = {
   accent: '#7C5CFC',
+  errorDark: '#FF9BA8',
+  errorLight: '#A82440',
   white: '#FFFFFF',
   tabBarDark: '#12111A',
   tabBarLight: '#FFFFFF',

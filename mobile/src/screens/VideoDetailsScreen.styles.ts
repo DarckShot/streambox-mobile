@@ -139,33 +139,6 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     gap: 12,
     paddingTop: 8,
   },
-  secondaryButton: {
-    minHeight: 54,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    borderWidth: 1,
-    borderCurve: 'continuous',
-    borderRadius: 17,
-    paddingHorizontal: 20,
-  },
-  secondaryButtonCompact: {
-    minHeight: 42,
-    borderRadius: 14,
-  },
-  secondaryButtonDark: {
-    backgroundColor: STREAMBOX_COLORS.cardDark,
-    borderColor: STREAMBOX_COLORS.cardBorderDark,
-  },
-  secondaryButtonLight: {
-    backgroundColor: STREAMBOX_COLORS.white,
-    borderColor: STREAMBOX_COLORS.cardBorderLight,
-  },
-  secondaryButtonText: {
-    fontSize: 16,
-    fontWeight: '800',
-  },
   buttonPressed: {
     opacity: 0.82,
     transform: [{ scale: 0.99 }],
