@@ -13,7 +13,15 @@ export const SearchIcon = ({
 
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-      <Circle cx="10.75" cy="10.75" r="6.75" stroke={color} strokeWidth={strokeWidth} />
+      <Circle
+        cx="10.75"
+        cy="10.75"
+        r="6.75"
+        stroke={color}
+        strokeWidth={strokeWidth}
+        fill={focused ? color : 'none'}
+        fillOpacity={focused ? 0.14 : 0}
+      />
       <Path d="m16 16 4 4" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
     </Svg>
   );

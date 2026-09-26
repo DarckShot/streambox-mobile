@@ -27,6 +27,8 @@ export const ProfileIcon = ({
         stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
+        fill={focused ? color : 'none'}
+        fillOpacity={focused ? 0.14 : 0}
       />
     </Svg>
   );
