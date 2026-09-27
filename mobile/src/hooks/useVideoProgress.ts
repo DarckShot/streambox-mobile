@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
 import { clearVideoProgress, loadVideoProgress, saveVideoProgress } from '../storage/videoProgress';
+import { useWatchHistoryStore } from '../store/useWatchHistoryStore';
 import { clampPlaybackTime } from '../utils/clampPlaybackTime';
 
 const SAVE_INTERVAL_MS = 5000;
@@ -41,6 +42,7 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
   const completedRef = useRef(false);
   const durationRef = useRef(0);
   const latestTimeRef = useRef<number | null>(null);
+  const hasProgressThisSessionRef = useRef(false);
   const pendingSeekRef = useRef<number | null>(null);
   const lastWriteAtRef = useRef(0);
 
@@ -48,6 +50,7 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
     (time: number): void => {
       lastWriteAtRef.current = Date.now();
       saveVideoProgress(videoId, time).catch(reportStorageError);
+      useWatchHistoryStore.getState().recordWatch(videoId, time, durationRef.current);
     },
     [videoId],
   );
@@ -55,7 +58,12 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
   const flush = useCallback((): void => {
     const time = latestTimeRef.current;
 
-    if (loadedRef.current && !completedRef.current && time !== null) {
+    if (
+      loadedRef.current &&
+      !completedRef.current &&
+      hasProgressThisSessionRef.current &&
+      time !== null
+    ) {
       persist(time);
     }
   }, [persist]);
@@ -123,8 +131,11 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
       }
 
       latestTimeRef.current = nextTime;
+      if (nextTime > 0) {
+        hasProgressThisSessionRef.current = true;
+      }
 
-      if (Date.now() - lastWriteAtRef.current >= SAVE_INTERVAL_MS) {
+      if (nextTime > 0 && Date.now() - lastWriteAtRef.current >= SAVE_INTERVAL_MS) {
         persist(nextTime);
       }
     },
@@ -141,6 +152,7 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
 
       const nextTime = clampPlaybackTime(time, duration);
       latestTimeRef.current = nextTime;
+      hasProgressThisSessionRef.current = true;
       pendingSeekRef.current = nextTime;
       persist(nextTime);
     },
@@ -156,11 +168,13 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
 
   const complete = useCallback((): void => {
     completedRef.current = true;
+    useWatchHistoryStore.getState().recordWatch(videoId, 0, durationRef.current);
     clear();
-  }, [clear]);
+  }, [clear, videoId]);
 
   const beginReplay = useCallback((): void => {
     completedRef.current = false;
+    hasProgressThisSessionRef.current = false;
     lastWriteAtRef.current = 0;
     clear();
     pendingSeekRef.current = 0;

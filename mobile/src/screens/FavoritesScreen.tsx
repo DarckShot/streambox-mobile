@@ -7,6 +7,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { HeartIcon } from '../components/icons/HeartIcon';
+import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
 import VideoCard from '../components/video/VideoCard';
 import { STREAMBOX_COLORS } from '../constants/theme';
 import { VIDEO_CATALOG } from '../constants/videoCatalog';
@@ -139,15 +140,17 @@ export const FavoritesScreen = (): ReactElement => {
               {error}
             </Text>
           ) : null}
-          <FlashList
-            contentContainerStyle={styles.listContent}
-            contentInsetAdjustmentBehavior="never"
-            data={favoriteVideos}
-            ItemSeparatorComponent={ItemSeparator}
-            keyExtractor={keyExtractor}
-            renderItem={renderVideo}
-            showsVerticalScrollIndicator={false}
-          />
+          <ScrollEdgeBlur>
+            <FlashList
+              contentContainerStyle={styles.listContent}
+              contentInsetAdjustmentBehavior="never"
+              data={favoriteVideos}
+              ItemSeparatorComponent={ItemSeparator}
+              keyExtractor={keyExtractor}
+              renderItem={renderVideo}
+              showsVerticalScrollIndicator={false}
+            />
+          </ScrollEdgeBlur>
         </>
       ) : null}
     </SafeAreaView>

@@ -7,6 +7,7 @@ import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 import { FavoriteToggleButton } from '../components/favorites/FavoriteToggleButton';
 import { VideoPlaceholderIcon } from '../components/icons/VideoPlaceholderIcon';
 import RutubeVideoPlayer from '../components/player/RutubeVideoPlayer';
+import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
 import { VIDEO_CATALOG } from '../constants/videoCatalog';
 import { RootRoute } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
@@ -79,88 +80,92 @@ export const VideoDetailsScreen = ({
         videoId={video.id}
       />
 
-      <ScrollView
-        style={styles.detailsScroll}
-        contentContainerStyle={[styles.details, isCompact ? styles.detailsCompact : null]}
-      >
-        <View style={styles.categoryRow}>
-          <View style={styles.categoryMark} />
-          <Text style={styles.category}>{video.category}</Text>
-        </View>
+      <ScrollEdgeBlur>
+        <ScrollView
+          style={styles.detailsScroll}
+          contentContainerStyle={[styles.details, isCompact ? styles.detailsCompact : null]}
+        >
+          <View style={styles.categoryRow}>
+            <View style={styles.categoryMark} />
+            <Text style={styles.category}>{video.category}</Text>
+          </View>
 
-        <View style={styles.titleBlock}>
-          <Text
-            accessible={false}
-            importantForAccessibility="no"
-            onTextLayout={(event) => {
-              setIsTitleOverflowing(event.nativeEvent.lines.length > titleLineLimit);
-            }}
-            style={[styles.title, isCompact ? styles.titleCompact : null, styles.titleMeasure]}
-          >
-            {video.title}
-          </Text>
-          <Text
-            ellipsizeMode="tail"
-            numberOfLines={isTitleExpanded ? undefined : titleLineLimit}
-            style={[styles.title, isCompact ? styles.titleCompact : null, { color: colors.text }]}
-          >
-            {video.title}
-          </Text>
-          {isTitleOverflowing ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityState={{ expanded: isTitleExpanded }}
-              onPress={() => setIsTitleExpanded((expanded) => !expanded)}
-              style={styles.titleToggle}
+          <View style={styles.titleBlock}>
+            <Text
+              accessible={false}
+              importantForAccessibility="no"
+              onTextLayout={(event) => {
+                setIsTitleOverflowing(event.nativeEvent.lines.length > titleLineLimit);
+              }}
+              style={[styles.title, isCompact ? styles.titleCompact : null, styles.titleMeasure]}
             >
-              <Text style={styles.titleToggleText}>
-                {isTitleExpanded ? 'Свернуть' : 'Показать полностью'}
-              </Text>
-            </Pressable>
-          ) : null}
-        </View>
+              {video.title}
+            </Text>
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={isTitleExpanded ? undefined : titleLineLimit}
+              style={[styles.title, isCompact ? styles.titleCompact : null, { color: colors.text }]}
+            >
+              {video.title}
+            </Text>
+            {isTitleOverflowing ? (
+              <Pressable
+                accessibilityRole="button"
+                accessibilityState={{ expanded: isTitleExpanded }}
+                onPress={() => setIsTitleExpanded((expanded) => !expanded)}
+                style={styles.titleToggle}
+              >
+                <Text style={styles.titleToggleText}>
+                  {isTitleExpanded ? 'Свернуть' : 'Показать полностью'}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
 
-        <View style={styles.metaRow}>
-          <Text style={[styles.metaLabel, dark ? styles.textDark : styles.textLight]}>
-            Длительность
-          </Text>
-          <Text style={[styles.metaValue, { color: colors.text }]}>{video.duration}</Text>
-        </View>
+          <View style={styles.metaRow}>
+            <Text style={[styles.metaLabel, dark ? styles.textDark : styles.textLight]}>
+              Длительность
+            </Text>
+            <Text style={[styles.metaValue, { color: colors.text }]}>{video.duration}</Text>
+          </View>
 
-        <View style={[styles.divider, dark ? styles.dividerDark : styles.dividerLight]} />
+          <View style={[styles.divider, dark ? styles.dividerDark : styles.dividerLight]} />
 
-        <View style={[styles.descriptionBlock, isCompact ? styles.descriptionBlockCompact : null]}>
-          <Text
-            style={[
-              styles.sectionTitle,
-              isCompact ? styles.sectionTitleCompact : null,
-              { color: colors.text },
-            ]}
+          <View
+            style={[styles.descriptionBlock, isCompact ? styles.descriptionBlockCompact : null]}
           >
-            О видео
-          </Text>
-          <Text
-            ellipsizeMode="tail"
-            numberOfLines={isLandscape ? 3 : isCompact ? 2 : 4}
-            style={[
-              styles.description,
-              isCompact ? styles.descriptionCompact : null,
-              dark ? styles.textDark : styles.textLight,
-            ]}
-          >
-            {video.description}
-          </Text>
-        </View>
+            <Text
+              style={[
+                styles.sectionTitle,
+                isCompact ? styles.sectionTitleCompact : null,
+                { color: colors.text },
+              ]}
+            >
+              О видео
+            </Text>
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={isLandscape ? 3 : isCompact ? 2 : 4}
+              style={[
+                styles.description,
+                isCompact ? styles.descriptionCompact : null,
+                dark ? styles.textDark : styles.textLight,
+              ]}
+            >
+              {video.description}
+            </Text>
+          </View>
 
-        <View style={styles.actions}>
-          <FavoriteToggleButton
-            compact={isCompact}
-            isDark={dark}
-            textColor={colors.text}
-            videoId={video.id}
-          />
-        </View>
-      </ScrollView>
+          <View style={styles.actions}>
+            <FavoriteToggleButton
+              compact={isCompact}
+              isDark={dark}
+              textColor={colors.text}
+              videoId={video.id}
+            />
+          </View>
+        </ScrollView>
+      </ScrollEdgeBlur>
     </SafeAreaView>
   );
 };

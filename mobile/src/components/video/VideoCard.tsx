@@ -1,4 +1,4 @@
-import { memo, useCallback, type ReactElement } from 'react';
+import { memo, useCallback, type ReactElement, type ReactNode } from 'react';
 import { Image, Pressable, Text, View } from 'react-native';
 
 import { VideoPlaceholderIcon } from '../icons/VideoPlaceholderIcon';
@@ -13,6 +13,7 @@ interface VideoCardProps {
   isDark: boolean;
   textColor: string;
   onPress?: (videoId: string) => void;
+  footer?: ReactNode;
 }
 
 const VideoCard = ({
@@ -24,6 +25,7 @@ const VideoCard = ({
   isDark,
   textColor,
   onPress,
+  footer,
 }: VideoCardProps): ReactElement => {
   const handlePress = useCallback((): void => {
     onPress?.(id);
@@ -64,6 +66,7 @@ const VideoCard = ({
           {title}
         </Text>
       </View>
+      {footer}
     </Pressable>
   );
 };

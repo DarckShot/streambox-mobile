@@ -8,6 +8,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SearchIcon } from '../components/icons/SearchIcon';
+import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
 import VideoCard from '../components/video/VideoCard';
 import { STREAMBOX_COLORS } from '../constants/theme';
 import { useDebouncedValue } from '../hooks/useDebouncedValue';
@@ -119,16 +120,18 @@ export const SearchScreen = (): ReactElement => {
           </Text>
         </View>
       ) : (
-        <FlashList
-          contentContainerStyle={styles.listContent}
-          contentInsetAdjustmentBehavior="never"
-          data={results}
-          ItemSeparatorComponent={ItemSeparator}
-          keyExtractor={keyExtractor}
-          keyboardShouldPersistTaps="handled"
-          renderItem={renderVideo}
-          showsVerticalScrollIndicator={false}
-        />
+        <ScrollEdgeBlur>
+          <FlashList
+            contentContainerStyle={styles.listContent}
+            contentInsetAdjustmentBehavior="never"
+            data={results}
+            ItemSeparatorComponent={ItemSeparator}
+            keyExtractor={keyExtractor}
+            keyboardShouldPersistTaps="handled"
+            renderItem={renderVideo}
+            showsVerticalScrollIndicator={false}
+          />
+        </ScrollEdgeBlur>
       )}
     </SafeAreaView>
   );

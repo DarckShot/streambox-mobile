@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LINKING_OPTIONS } from './src/navigation/linking';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useFavoritesStore } from './src/store/useFavoritesStore';
+import { useWatchHistoryStore } from './src/store/useWatchHistoryStore';
 
 const queryClient = new QueryClient();
 
@@ -15,6 +16,7 @@ const App = () => {
 
   useEffect(() => {
     useFavoritesStore.getState().loadFavorites();
+    useWatchHistoryStore.getState().loadHistory();
   }, []);
 
   return (

@@ -23,7 +23,7 @@ const VIDEO_DETAILS_OPTIONS: NativeStackNavigationOptions = {
 };
 const HISTORY_OPTIONS: NativeStackNavigationOptions = {
   orientation: 'portrait',
-  title: 'History',
+  title: 'История',
 };
 const SETTINGS_OPTIONS: NativeStackNavigationOptions = {
   orientation: 'portrait',
