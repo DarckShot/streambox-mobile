@@ -1,5 +1,5 @@
 import { useIsFocused, usePreventRemove } from '@react-navigation/native';
-import { useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, type RefObject } from 'react';
 import type { OnLoadData, OnProgressData, VideoRef } from 'react-native-video';
 
 import type { BasicVideoPlayerStatus } from '../types/player';
@@ -10,8 +10,10 @@ import { useRutubePlayer } from './useRutubePlayer';
 import { useVideoPlaybackActions } from './useVideoPlaybackActions';
 import { useVideoPlaybackEvents } from './useVideoPlaybackEvents';
 import { useVideoProgress } from './useVideoProgress';
+import { usePlaybackSettingsStore } from '../store/usePlaybackSettingsStore';
 
 interface UseRutubeVideoPlaybackOptions {
+  autoPlayOnOpen?: boolean;
   externalId: string;
   videoId: string;
 }
@@ -38,12 +40,19 @@ export interface RutubeVideoPlayback {
 }
 
 export const useRutubeVideoPlayback = ({
+  autoPlayOnOpen = false,
   externalId,
   videoId,
 }: UseRutubeVideoPlaybackOptions): RutubeVideoPlayback => {
   const isFocused = useIsFocused();
   const videoRef = useRef<VideoRef>(null);
   const initialStartPositionRef = useRef<number | null>(null);
+  const autoStartedRef = useRef(false);
+  const autoPlayOnResume = usePlaybackSettingsStore((state) => state.autoPlayOnResume);
+  const settingsLoaded = usePlaybackSettingsStore((state) => state.loaded);
+  useEffect(() => {
+    usePlaybackSettingsStore.getState().loadSettings();
+  }, []);
   const {
     actions: playerActions,
     state: player,
@@ -59,6 +68,7 @@ export const useRutubeVideoPlayback = ({
   usePreventRemove(fullscreen.state.mounted, fullscreen.actions.close);
 
   const actions = useVideoPlaybackActions({
+    autoPlayOnRestore: autoPlayOnOpen || autoPlayOnResume,
     fullscreen: fullscreen.actions,
     player,
     playerActions,
@@ -69,7 +79,7 @@ export const useRutubeVideoPlayback = ({
     isFocused,
     onDiscard: actions.discardSavedPosition,
     onRestore: actions.restoreSavedPosition,
-    saved,
+    saved: { ...saved, loaded: saved.loaded && settingsLoaded },
   });
   const events = useVideoPlaybackEvents({
     fullscreen: fullscreen.actions,
@@ -89,6 +99,29 @@ export const useRutubeVideoPlayback = ({
   );
   const status = resumeReady || player.status === 'error' ? player.status : 'loading';
 
+  useEffect(() => {
+    if (
+      !autoPlayOnOpen ||
+      autoStartedRef.current ||
+      !resumeReady ||
+      !isFocused ||
+      saved.position !== null ||
+      player.hasStarted ||
+      !player.playbackUrl
+    )
+      return;
+    autoStartedRef.current = true;
+    playerActions.togglePlayback();
+  }, [
+    autoPlayOnOpen,
+    isFocused,
+    player.hasStarted,
+    player.playbackUrl,
+    playerActions,
+    resumeReady,
+    saved.position,
+  ]);
+
   return {
     canShowControls,
     controls,
@@ -102,7 +135,7 @@ export const useRutubeVideoPlayback = ({
       onRetryPress: actions.onRetryPress,
       onSeek: actions.onSeek,
     },
-    mediaReady: saved.loaded,
+    mediaReady: saved.loaded && settingsLoaded,
     player,
     source,
     status,

@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 
 import { clearVideoProgress, loadVideoProgress, saveVideoProgress } from '../storage/videoProgress';
 import { useWatchHistoryStore } from '../store/useWatchHistoryStore';
+import { useSavedProgressStore } from '../store/useSavedProgressStore';
 import { clampPlaybackTime } from '../utils/clampPlaybackTime';
 
 const SAVE_INTERVAL_MS = 5000;
@@ -38,6 +39,8 @@ interface UseVideoProgressResult {
 
 export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoProgressResult => {
   const [saved, setSaved] = useState<SavedProgress>({ loaded: false, position: null });
+  const resetVersion = useSavedProgressStore((state) => state.resetVersion);
+  const previousResetVersionRef = useRef(resetVersion);
   const loadedRef = useRef(false);
   const completedRef = useRef(false);
   const durationRef = useRef(0);
@@ -46,10 +49,20 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
   const pendingSeekRef = useRef<number | null>(null);
   const lastWriteAtRef = useRef(0);
 
+  useEffect(() => {
+    if (previousResetVersionRef.current === resetVersion) return;
+    previousResetVersionRef.current = resetVersion;
+    latestTimeRef.current = null;
+    hasProgressThisSessionRef.current = false;
+    pendingSeekRef.current = null;
+    setSaved({ loaded: true, position: null });
+  }, [resetVersion]);
+
   const persist = useCallback(
     (time: number): void => {
       lastWriteAtRef.current = Date.now();
       saveVideoProgress(videoId, time).catch(reportStorageError);
+      useSavedProgressStore.getState().setPosition(videoId, time);
       useWatchHistoryStore.getState().recordWatch(videoId, time, durationRef.current);
     },
     [videoId],
@@ -81,6 +94,7 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
           latestTimeRef.current = position;
           loadedRef.current = true;
           setSaved({ loaded: true, position });
+          if (position !== null) useSavedProgressStore.getState().setPosition(videoId, position);
         }
       });
 
@@ -164,6 +178,7 @@ export const useVideoProgress = (videoId: string, isActive: boolean): UseVideoPr
     pendingSeekRef.current = null;
     setSaved({ loaded: true, position: null });
     clearVideoProgress(videoId).catch(reportStorageError);
+    useSavedProgressStore.getState().setPosition(videoId, null);
   }, [videoId]);
 
   const complete = useCallback((): void => {

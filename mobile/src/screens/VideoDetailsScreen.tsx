@@ -13,7 +13,10 @@ import { RootRoute } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import { videoDetailsScreenStyles as styles } from './VideoDetailsScreen.styles';
 
-type VideoDetailsScreenProps = NativeStackScreenProps<RootStackParamList, RootRoute.VideoDetails>;
+type VideoDetailsScreenProps = NativeStackScreenProps<
+  RootStackParamList,
+  RootRoute.VideoDetails | RootRoute.Player
+>;
 
 const VIDEO_DETAILS_SAFE_AREA_EDGES: Edge[] = ['left', 'right', 'bottom'];
 
@@ -73,6 +76,7 @@ export const VideoDetailsScreen = ({
       ]}
     >
       <RutubeVideoPlayer
+        autoPlayOnOpen={route.name === RootRoute.Player}
         containerStyle={isLandscape ? styles.playerLandscape : portraitPlayerStyle}
         externalId={video.externalId}
         key={video.id}

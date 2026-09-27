@@ -7,6 +7,7 @@ import type { useRutubePlayer } from './useRutubePlayer';
 import type { useVideoProgress } from './useVideoProgress';
 
 interface VideoPlaybackActionsOptions {
+  autoPlayOnRestore: boolean;
   fullscreen: ReturnType<typeof usePlayerFullscreen>['actions'];
   player: ReturnType<typeof useRutubePlayer>['state'];
   playerActions: ReturnType<typeof useRutubePlayer>['actions'];
@@ -24,6 +25,7 @@ interface VideoPlaybackActions {
 }
 
 export const useVideoPlaybackActions = ({
+  autoPlayOnRestore,
   fullscreen,
   player,
   playerActions,
@@ -49,9 +51,9 @@ export const useVideoPlaybackActions = ({
   const restoreSavedPosition = useCallback(
     (position: number): void => {
       seekTo(position);
-      playerActions.togglePlayback();
+      if (autoPlayOnRestore) playerActions.togglePlayback();
     },
-    [playerActions, seekTo],
+    [autoPlayOnRestore, playerActions, seekTo],
   );
 
   const discardSavedPosition = useCallback((): void => {

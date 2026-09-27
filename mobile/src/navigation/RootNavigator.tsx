@@ -20,14 +20,21 @@ const MAIN_OPTIONS: NativeStackNavigationOptions = {
 const VIDEO_DETAILS_OPTIONS: NativeStackNavigationOptions = {
   orientation: 'all',
   title: 'О видео',
+  headerBackTitle: 'Назад',
+};
+const PLAYER_OPTIONS: NativeStackNavigationOptions = {
+  ...VIDEO_DETAILS_OPTIONS,
+  title: 'Плеер',
 };
 const HISTORY_OPTIONS: NativeStackNavigationOptions = {
   orientation: 'portrait',
   title: 'История',
+  headerBackTitle: 'Назад',
 };
 const SETTINGS_OPTIONS: NativeStackNavigationOptions = {
   orientation: 'portrait',
-  title: 'Settings',
+  title: 'Настройки',
+  headerBackTitle: 'Назад',
 };
 
 export const RootNavigator = (): ReactElement => {
@@ -38,6 +45,11 @@ export const RootNavigator = (): ReactElement => {
         name={RootRoute.VideoDetails}
         component={VideoDetailsScreen}
         options={VIDEO_DETAILS_OPTIONS}
+      />
+      <Stack.Screen
+        name={RootRoute.Player}
+        component={VideoDetailsScreen}
+        options={PLAYER_OPTIONS}
       />
       <Stack.Screen name={RootRoute.History} component={HistoryScreen} options={HISTORY_OPTIONS} />
       <Stack.Screen

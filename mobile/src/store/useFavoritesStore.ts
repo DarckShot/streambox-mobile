@@ -11,6 +11,7 @@ interface FavoritesState {
   loadFavorites: () => Promise<void>;
   status: FavoritesStatus;
   toggleFavorite: (videoId: string) => Promise<void>;
+  clearFavorites: () => Promise<void>;
 }
 
 export const useFavoritesStore = create<FavoritesState>()((set, get) => ({
@@ -60,6 +61,18 @@ export const useFavoritesStore = create<FavoritesState>()((set, get) => ({
         favoriteIds,
         isSaving: false,
       });
+    }
+  },
+  clearFavorites: async (): Promise<void> => {
+    const { favoriteIds, isSaving, status } = get();
+    if (status !== 'ready' || isSaving) return;
+    set({ favoriteIds: [], isSaving: true, error: null });
+    try {
+      await saveFavoriteIds([]);
+      set({ isSaving: false });
+    } catch (error: unknown) {
+      console.warn('Не удалось очистить избранное.', error);
+      set({ favoriteIds, isSaving: false, error: 'Не удалось очистить избранное.' });
     }
   },
 }));

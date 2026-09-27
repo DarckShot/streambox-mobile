@@ -5,6 +5,7 @@ import { createAsyncStorage } from '@react-native-async-storage/async-storage/je
 
 import { useRutubeVideoPlayback } from '../src/hooks/useRutubeVideoPlayback';
 import { loadVideoProgress } from '../src/storage/videoProgress';
+import { usePlaybackSettingsStore } from '../src/store/usePlaybackSettingsStore';
 
 jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
@@ -108,4 +109,28 @@ it('сохраняет позицию потока, который не сооб
   await ReactTestRenderer.act(() => {
     renderer.unmount();
   });
+});
+
+it('запускает Player по прямой ссылке после загрузки видео', async () => {
+  await storage.clear();
+  usePlaybackSettingsStore.setState({ loaded: true, autoPlayOnResume: false });
+  let playback!: ReturnType<typeof useRutubeVideoPlayback>;
+  let renderer!: ReactTestRenderer.ReactTestRenderer;
+  const Probe = (): null => {
+    playback = useRutubeVideoPlayback({
+      externalId: 'external-c',
+      videoId: 'video-c',
+      autoPlayOnOpen: true,
+    });
+    return null;
+  };
+  await ReactTestRenderer.act(async () => {
+    renderer = ReactTestRenderer.create(<Probe />);
+  });
+  await ReactTestRenderer.act(() => {
+    playback.handlers.onLoad({ duration: 90, currentTime: 0 } as OnLoadData);
+  });
+  expect(playback.player.hasStarted).toBe(true);
+  expect(playback.player.isPaused).toBe(false);
+  await ReactTestRenderer.act(() => renderer.unmount());
 });

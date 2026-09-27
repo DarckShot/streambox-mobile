@@ -8,6 +8,8 @@ import { LINKING_OPTIONS } from './src/navigation/linking';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { useFavoritesStore } from './src/store/useFavoritesStore';
 import { useWatchHistoryStore } from './src/store/useWatchHistoryStore';
+import { useSavedProgressStore } from './src/store/useSavedProgressStore';
+import { usePlaybackSettingsStore } from './src/store/usePlaybackSettingsStore';
 
 const queryClient = new QueryClient();
 
@@ -17,6 +19,8 @@ const App = () => {
   useEffect(() => {
     useFavoritesStore.getState().loadFavorites();
     useWatchHistoryStore.getState().loadHistory();
+    useSavedProgressStore.getState().loadProgress();
+    usePlaybackSettingsStore.getState().loadSettings();
   }, []);
 
   return (
