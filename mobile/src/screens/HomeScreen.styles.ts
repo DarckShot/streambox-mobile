@@ -53,7 +53,13 @@ export const homeScreenStyles = StyleSheet.create({
   separator: {
     height: 16,
   },
-  centerState: { alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 28 },
+  centerState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 14,
+    paddingHorizontal: 28,
+  },
   stateTitle: { fontSize: 23, fontWeight: '800', textAlign: 'center' },
   retryButton: {
     backgroundColor: STREAMBOX_COLORS.accent,
