@@ -2,7 +2,7 @@ import type { ReactElement } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { STREAMBOX_COLORS } from '../../constants/theme';
-import { useFavoritesStore, type FavoritesStatus } from '../../store/useFavoritesStore';
+import { useFavoriteMutation, useUserCollections } from '../../hooks/useUserData';
 import { HeartIcon } from '../icons/HeartIcon';
 import { favoriteToggleButtonStyles as styles } from './FavoriteToggleButton.styles';
 
@@ -14,11 +14,11 @@ interface FavoriteToggleButtonProps {
 }
 
 const getButtonLabel = (
-  status: FavoritesStatus,
+  status: 'loading' | 'ready' | 'error',
   isSaving: boolean,
   isFavorite: boolean,
 ): string => {
-  if (status === 'idle' || status === 'loading') {
+  if (status === 'loading') {
     return 'Загрузка избранного…';
   }
   if (status === 'error') {
@@ -36,17 +36,17 @@ export const FavoriteToggleButton = ({
   textColor,
   videoId,
 }: FavoriteToggleButtonProps): ReactElement => {
-  const isFavorite = useFavoritesStore((state) => state.favoriteIds.includes(videoId));
-  const status = useFavoritesStore((state) => state.status);
-  const isSaving = useFavoritesStore((state) => state.isSaving);
-  const error = useFavoritesStore((state) => state.error);
-  const loadFavorites = useFavoritesStore((state) => state.loadFavorites);
-  const toggleFavorite = useFavoritesStore((state) => state.toggleFavorite);
+  const { userId, favorites } = useUserCollections();
+  const mutation = useFavoriteMutation(userId);
+  const isFavorite = favorites.data?.some((item) => item.videoId === videoId) ?? false;
+  const status = favorites.isPending ? 'loading' : favorites.isError ? 'error' : 'ready';
+  const isSaving = mutation.isPending;
+  const error = mutation.error?.message ?? favorites.error?.message;
   const disabled = status !== 'ready' || isSaving;
   const label = getButtonLabel(status, isSaving, isFavorite);
 
   const handlePress = (): void => {
-    toggleFavorite(videoId);
+    mutation.mutate({ videoId, remove: isFavorite });
   };
 
   return (
@@ -80,7 +80,11 @@ export const FavoriteToggleButton = ({
         </Text>
       ) : null}
       {status === 'error' ? (
-        <Pressable accessibilityRole="button" onPress={() => loadFavorites()} style={styles.retry}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => favorites.refetch()}
+          style={styles.retry}
+        >
           <Text style={styles.retryText}>Повторить загрузку</Text>
         </Pressable>
       ) : null}

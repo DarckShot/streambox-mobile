@@ -1,6 +1,6 @@
 import { StyleSheet } from 'react-native';
 
-import { STREAMBOX_COLORS } from '../constants/theme';
+import { STREAMBOX_COLORS } from '../../constants/theme';
 
 export const historyScreenStyles = StyleSheet.create({
   screen: { flex: 1 },

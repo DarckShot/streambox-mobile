@@ -8,6 +8,9 @@ import { HistoryScreen } from '../screens/HistoryScreen';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { VideoDetailsScreen } from '../screens/VideoDetailsScreen';
 import { MainTabNavigator } from './MainTabNavigator';
+import { useAuth } from '../auth/AuthProvider';
+import { LoginScreen } from '../screens/LoginScreen';
+import { RegistrationScreen } from '../screens/RegistrationScreen';
 import { RootRoute } from './routes';
 import type { RootStackParamList } from './types';
 
@@ -38,25 +41,49 @@ const SETTINGS_OPTIONS: NativeStackNavigationOptions = {
 };
 
 export const RootNavigator = (): ReactElement => {
+  const { status } = useAuth();
   return (
-    <Stack.Navigator initialRouteName={RootRoute.Main}>
-      <Stack.Screen name={RootRoute.Main} component={MainTabNavigator} options={MAIN_OPTIONS} />
-      <Stack.Screen
-        name={RootRoute.VideoDetails}
-        component={VideoDetailsScreen}
-        options={VIDEO_DETAILS_OPTIONS}
-      />
-      <Stack.Screen
-        name={RootRoute.Player}
-        component={VideoDetailsScreen}
-        options={PLAYER_OPTIONS}
-      />
-      <Stack.Screen name={RootRoute.History} component={HistoryScreen} options={HISTORY_OPTIONS} />
-      <Stack.Screen
-        name={RootRoute.Settings}
-        component={SettingsScreen}
-        options={SETTINGS_OPTIONS}
-      />
+    <Stack.Navigator
+      initialRouteName={status === 'authenticated' ? RootRoute.Main : RootRoute.Login}
+    >
+      {status !== 'authenticated' ? (
+        <>
+          <Stack.Screen
+            name={RootRoute.Login}
+            component={LoginScreen}
+            options={{ headerShown: false }}
+          />
+          <Stack.Screen
+            name={RootRoute.Register}
+            component={RegistrationScreen}
+            options={{ title: 'Регистрация' }}
+          />
+        </>
+      ) : (
+        <>
+          <Stack.Screen name={RootRoute.Main} component={MainTabNavigator} options={MAIN_OPTIONS} />
+          <Stack.Screen
+            name={RootRoute.VideoDetails}
+            component={VideoDetailsScreen}
+            options={VIDEO_DETAILS_OPTIONS}
+          />
+          <Stack.Screen
+            name={RootRoute.Player}
+            component={VideoDetailsScreen}
+            options={PLAYER_OPTIONS}
+          />
+          <Stack.Screen
+            name={RootRoute.History}
+            component={HistoryScreen}
+            options={HISTORY_OPTIONS}
+          />
+          <Stack.Screen
+            name={RootRoute.Settings}
+            component={SettingsScreen}
+            options={SETTINGS_OPTIONS}
+          />
+        </>
+      )}
     </Stack.Navigator>
   );
 };

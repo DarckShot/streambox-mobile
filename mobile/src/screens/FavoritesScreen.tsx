@@ -13,7 +13,7 @@ import { STREAMBOX_COLORS } from '../constants/theme';
 import { useVideosByIds } from '../hooks/useVideosByIds';
 import { RootRoute, TabRoute } from '../navigation/routes';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
-import { useFavoritesStore } from '../store/useFavoritesStore';
+import { useUserCollections } from '../hooks/useUserData';
 import type { Video } from '../types/video';
 import { favoritesScreenStyles as styles } from './FavoritesScreen.styles';
 
@@ -29,10 +29,11 @@ const ItemSeparator = (): ReactElement => <View style={styles.separator} />;
 export const FavoritesScreen = (): ReactElement => {
   const navigation = useNavigation<FavoritesNavigation>();
   const { colors, dark } = useTheme();
-  const favoriteIds = useFavoritesStore((state) => state.favoriteIds);
-  const status = useFavoritesStore((state) => state.status);
-  const error = useFavoritesStore((state) => state.error);
-  const loadFavorites = useFavoritesStore((state) => state.loadFavorites);
+  const { favorites } = useUserCollections();
+  const favoriteIds = favorites.data?.map((item) => item.videoId) ?? [];
+  const status = favorites.isPending ? 'loading' : favorites.isError ? 'error' : 'ready';
+  const error = favorites.error?.message ?? null;
+  const loadFavorites = favorites.refetch;
   const errorColor = dark ? STREAMBOX_COLORS.errorDark : STREAMBOX_COLORS.errorLight;
   const {
     byId,
@@ -81,7 +82,7 @@ export const FavoritesScreen = (): ReactElement => {
         ) : null}
       </View>
 
-      {status === 'idle' || status === 'loading' ? (
+      {status === 'loading' ? (
         <View style={styles.centerState}>
           <ActivityIndicator color={STREAMBOX_COLORS.accent} size="large" />
           <Text style={[styles.stateDescription, { color: colors.text }]}>

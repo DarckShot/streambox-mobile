@@ -2,13 +2,22 @@ import { getStateFromPath, type LinkingOptions } from '@react-navigation/native'
 
 import { RootRoute, ROUTE_PATHS, TabRoute } from './routes';
 import type { RootStackParamList } from './types';
+import { getAccessToken } from '../auth/session';
 
 export const DEEP_LINK_PREFIXES = ['streambox://'];
+let pendingPrivatePath: string | null = null;
+export const takePendingPrivatePath = (): string | null => {
+  const path = pendingPrivatePath;
+  pendingPrivatePath = null;
+  return path;
+};
 
 /** Карта путей, используемая корневым контейнером React Navigation. */
 export const LINKING_CONFIG: NonNullable<LinkingOptions<RootStackParamList>['config']> = {
   initialRouteName: RootRoute.Main,
   screens: {
+    [RootRoute.Login]: ROUTE_PATHS.LOGIN,
+    [RootRoute.Register]: ROUTE_PATHS.REGISTER,
     [RootRoute.Main]: {
       initialRouteName: TabRoute.Home,
       screens: {
@@ -30,6 +39,10 @@ export const LINKING_OPTIONS: LinkingOptions<RootStackParamList> = {
   config: LINKING_CONFIG,
   getStateFromPath: (path, config) => {
     try {
+      if (!getAccessToken() && path !== ROUTE_PATHS.LOGIN && path !== ROUTE_PATHS.REGISTER) {
+        pendingPrivatePath = path;
+        return getStateFromPath(ROUTE_PATHS.LOGIN, config);
+      }
       return getStateFromPath(path, config) ?? getStateFromPath('', config);
     } catch {
       return getStateFromPath('', config);

@@ -4,14 +4,14 @@ import type { VideoRef } from 'react-native-video';
 import { clampPlaybackTime } from '../utils/clampPlaybackTime';
 import type { usePlayerFullscreen } from './usePlayerFullscreen';
 import type { useRutubePlayer } from './useRutubePlayer';
-import type { useVideoProgress } from './useVideoProgress';
+import type { useServerVideoProgress } from './useServerVideoProgress';
 
 interface VideoPlaybackActionsOptions {
   autoPlayOnRestore: boolean;
   fullscreen: ReturnType<typeof usePlayerFullscreen>['actions'];
   player: ReturnType<typeof useRutubePlayer>['state'];
   playerActions: ReturnType<typeof useRutubePlayer>['actions'];
-  progress: ReturnType<typeof useVideoProgress>['actions'];
+  progress: ReturnType<typeof useServerVideoProgress>['actions'];
   videoRef: RefObject<VideoRef | null>;
 }
 

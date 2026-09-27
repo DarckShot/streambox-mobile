@@ -7,6 +7,8 @@ export type VideoRouteParams = {
 };
 
 export type RootStackParamList = {
+  [RootRoute.Login]: undefined;
+  [RootRoute.Register]: undefined;
   [RootRoute.Main]: NavigatorScreenParams<MainTabParamList> | undefined;
   [RootRoute.VideoDetails]: VideoRouteParams;
   [RootRoute.Player]: VideoRouteParams;

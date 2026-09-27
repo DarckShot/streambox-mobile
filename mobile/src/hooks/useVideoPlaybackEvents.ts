@@ -3,11 +3,11 @@ import type { OnLoadData, OnProgressData } from 'react-native-video';
 
 import type { usePlayerFullscreen } from './usePlayerFullscreen';
 import type { useRutubePlayer } from './useRutubePlayer';
-import type { useVideoProgress } from './useVideoProgress';
+import type { useServerVideoProgress } from './useServerVideoProgress';
 
 interface VideoPlaybackEventsOptions {
   fullscreen: ReturnType<typeof usePlayerFullscreen>['actions'];
-  progress: ReturnType<typeof useVideoProgress>['actions'];
+  progress: ReturnType<typeof useServerVideoProgress>['actions'];
   ready: boolean;
   recordMediaLoad: (duration: number) => void;
   seekTo: (time: number) => void;

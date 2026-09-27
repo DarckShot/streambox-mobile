@@ -4,10 +4,10 @@ import ReactTestRenderer from 'react-test-renderer';
 import { Text } from 'react-native';
 
 import { videoKeys } from '../src/api/videoQueries';
+import { userKeys } from '../src/api/userQueries';
 import { sampleVideo } from '../testFixtures/video';
 import { RootRoute, TabRoute } from '../src/navigation/routes';
 import { FavoritesScreen } from '../src/screens/FavoritesScreen';
-import { useFavoritesStore } from '../src/store/useFavoritesStore';
 
 const mockNavigate = jest.fn();
 
@@ -40,12 +40,6 @@ jest.mock('@shopify/flash-list', () => {
 
 beforeEach(() => {
   mockNavigate.mockClear();
-  useFavoritesStore.setState({
-    error: null,
-    favoriteIds: ['video-001'],
-    isSaving: false,
-    status: 'ready',
-  });
 });
 
 it('открывает видео из избранного и сразу убирает его карточку после удаления', async () => {
@@ -53,6 +47,10 @@ it('открывает видео из избранного и сразу уби
 
   const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } });
   queryClient.setQueryData(videoKeys.detail('video-001'), sampleVideo);
+  queryClient.setQueryData(userKeys.me, { id: 'user-1', email: 'test@example.com' });
+  queryClient.setQueryData(userKeys.favorites('user-1'), [
+    { videoId: 'video-001', createdAt: new Date().toISOString() },
+  ]);
   await ReactTestRenderer.act(() => {
     renderer = ReactTestRenderer.create(
       <QueryClientProvider client={queryClient}>
@@ -71,8 +69,9 @@ it('открывает видео из избранного и сразу уби
   });
   expect(mockNavigate).toHaveBeenCalledWith(RootRoute.VideoDetails, { videoId: 'video-001' });
 
-  await ReactTestRenderer.act(() => {
-    useFavoritesStore.setState({ favoriteIds: [] });
+  await ReactTestRenderer.act(async () => {
+    queryClient.setQueryData(userKeys.favorites('user-1'), []);
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 30));
   });
 
   expect(renderer.root.findAllByProps({ accessibilityLabel: cardLabel })).toHaveLength(0);

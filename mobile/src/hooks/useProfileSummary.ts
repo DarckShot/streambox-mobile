@@ -1,6 +1,4 @@
-import { useFavoritesStore } from '../store/useFavoritesStore';
-import { useSavedProgressStore } from '../store/useSavedProgressStore';
-import { useWatchHistoryStore } from '../store/useWatchHistoryStore';
+import { useUserCollections } from './useUserData';
 
 export interface ProfileSummary {
   favorites: number | null;
@@ -10,16 +8,10 @@ export interface ProfileSummary {
 }
 
 export const useProfileSummary = (): ProfileSummary => {
-  const favoriteCount = useFavoritesStore((state) => state.favoriteIds.length);
-  const favoritesLoaded = useFavoritesStore((state) => state.status === 'ready');
-  const watchedCount = useWatchHistoryStore((state) => state.entries.length);
-  const historyLoaded = useWatchHistoryStore((state) => state.loaded);
-  const progressCount = useSavedProgressStore((state) => Object.keys(state.positions).length);
-  const progressLoaded = useSavedProgressStore((state) => state.loaded);
-
-  const favorites = favoritesLoaded ? favoriteCount : null;
-  const watched = historyLoaded ? watchedCount : null;
-  const inProgress = progressLoaded ? progressCount : null;
+  const collections = useUserCollections();
+  const favorites = collections.favorites.data?.length ?? null;
+  const watched = collections.history.data?.length ?? null;
+  const inProgress = collections.progress.data?.length ?? null;
 
   return {
     favorites,

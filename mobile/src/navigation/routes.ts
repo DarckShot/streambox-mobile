@@ -1,4 +1,6 @@
 export enum RootRoute {
+  Login = 'Login',
+  Register = 'Register',
   Main = 'Main',
   VideoDetails = 'VideoDetails',
   Player = 'Player',
@@ -14,6 +16,8 @@ export enum TabRoute {
 }
 
 export const ROUTE_PATHS = {
+  LOGIN: 'login',
+  REGISTER: 'register',
   HOME: '',
   SEARCH: 'search',
   VIDEO_DETAILS: 'videos/:videoId',

@@ -8,6 +8,7 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 
 import VideoCard from '../components/video/VideoCard';
 import { ImportVideoModal } from '../components/video/ImportVideoModal';
+import { ContinueWatching } from '../components/video/ContinueWatching';
 import { videoQueries } from '../api/videoQueries';
 import { STREAMBOX_COLORS } from '../constants/theme';
 import { RootRoute, TabRoute } from '../navigation/routes';
@@ -40,6 +41,7 @@ const HomeHeader = ({ onImportPress }: { onImportPress: () => void }): ReactElem
       <Pressable accessibilityRole="button" onPress={onImportPress} style={styles.importButton}>
         <Text style={styles.importButtonText}>+ Добавить видео RUTUBE</Text>
       </Pressable>
+      <ContinueWatching />
     </View>
   );
 };

@@ -4,7 +4,7 @@ import { STREAMBOX_COLORS } from '../../constants/theme';
 
 export const profileScreenStyles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { flex: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 },
+  content: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 18, paddingBottom: 16 },
   contentCompact: { paddingTop: 10, paddingBottom: 8 },
   header: { gap: 3 },
   eyebrow: {
@@ -76,4 +76,7 @@ export const profileScreenStyles = StyleSheet.create({
   divider: { borderTopWidth: StyleSheet.hairlineWidth, marginLeft: 18 },
   dividerDark: { borderTopColor: STREAMBOX_COLORS.cardBorderDark },
   dividerLight: { borderTopColor: STREAMBOX_COLORS.cardBorderLight },
+  migrationAction: { alignSelf: 'center', padding: 8 },
+  logoutAction: { alignSelf: 'center', padding: 10 },
+  logoutText: { fontWeight: '700' },
 });

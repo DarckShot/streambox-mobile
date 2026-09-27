@@ -1,6 +1,8 @@
 import axios from 'axios';
 
 import { API_BASE_URL } from '../config/apiConfig';
+import { getAccessToken, refreshSession } from '../auth/session';
+import type { InternalAxiosRequestConfig } from 'axios';
 
 export type ApiErrorKind =
   | 'network'
@@ -8,7 +10,9 @@ export type ApiErrorKind =
   | 'not-found'
   | 'server'
   | 'invalid-request'
-  | 'invalid-response';
+  | 'invalid-response'
+  | 'unauthorized'
+  | 'forbidden';
 
 export class ApiError extends Error {
   constructor(
@@ -27,6 +31,22 @@ export const apiClient = axios.create({
   headers: { Accept: 'application/json' },
 });
 
+apiClient.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+
+apiClient.interceptors.response.use(undefined, async (error: unknown) => {
+  if (!axios.isAxiosError(error) || error.response?.status !== 401 || !error.config) throw error;
+  const config = error.config as InternalAxiosRequestConfig & { retriedAfterRefresh?: boolean };
+  if (config.retriedAfterRefresh) throw error;
+  config.retriedAfterRefresh = true;
+  const token = await refreshSession();
+  config.headers.Authorization = `Bearer ${token}`;
+  return apiClient(config);
+});
+
 export const toApiError = (error: unknown): ApiError => {
   if (error instanceof ApiError) return error;
   if (axios.isAxiosError(error)) {
@@ -34,6 +54,8 @@ export const toApiError = (error: unknown): ApiError => {
       return new ApiError('timeout', 'Сервер не ответил вовремя. Попробуйте ещё раз.');
     }
     const status = error.response?.status;
+    if (status === 401) return new ApiError('unauthorized', 'Требуется вход в аккаунт.', status);
+    if (status === 403) return new ApiError('forbidden', 'Нет доступа к этим данным.', status);
     if (status === 404) return new ApiError('not-found', 'Видео не найдено.', status);
     if (status === 400) {
       const response = error.response?.data;

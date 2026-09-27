@@ -1,12 +1,15 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactTestRenderer from 'react-test-renderer';
 import { ScrollView, Text } from 'react-native';
 
 import { RootRoute, TabRoute } from '../src/navigation/routes';
 import { ProfileScreen } from '../src/screens/ProfileScreen';
-import { useFavoritesStore } from '../src/store/useFavoritesStore';
-import { useWatchHistoryStore } from '../src/store/useWatchHistoryStore';
-import { useSavedProgressStore } from '../src/store/useSavedProgressStore';
+import { userKeys } from '../src/api/userQueries';
+
+jest.mock('../src/auth/AuthProvider', () => ({
+  useAuth: () => ({ logout: jest.fn(), migrationStatus: 'complete' }),
+}));
 
 const mockNavigate = jest.fn();
 
@@ -17,18 +20,24 @@ jest.mock('@react-navigation/native', () => ({
 
 beforeEach(() => {
   mockNavigate.mockClear();
-  useFavoritesStore.setState({ favoriteIds: [], status: 'ready' });
-  useWatchHistoryStore.setState({ entries: [], loaded: true });
-  useSavedProgressStore.setState({ positions: {}, loaded: true });
 });
 
 it('показывает актуальные счётчики и открывает персональные разделы', async () => {
   let renderer!: ReactTestRenderer.ReactTestRenderer;
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  queryClient.setQueryData(userKeys.me, { id: 'user-1', email: 'test@example.com' });
+  queryClient.setQueryData(userKeys.favorites('user-1'), []);
+  queryClient.setQueryData(userKeys.history('user-1'), []);
+  queryClient.setQueryData(userKeys.progress('user-1'), []);
   await ReactTestRenderer.act(() => {
-    renderer = ReactTestRenderer.create(<ProfileScreen />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider client={queryClient}>
+        <ProfileScreen />
+      </QueryClientProvider>,
+    );
   });
 
-  expect(renderer.root.findAllByType(ScrollView)).toHaveLength(0);
+  expect(renderer.root.findAllByType(ScrollView)).toHaveLength(1);
 
   expect(
     renderer.root.findAllByProps({ accessibilityLabel: '0 в избранном' }).length,
@@ -42,8 +51,16 @@ it('показывает актуальные счётчики и открыва
       .some((node) => node.props.children === 'Пока нет сохранённых видео'),
   ).toBe(true);
 
-  await ReactTestRenderer.act(() => {
-    useSavedProgressStore.setState({ positions: { 'video-001': 12 } });
+  await ReactTestRenderer.act(async () => {
+    queryClient.setQueryData(userKeys.progress('user-1'), [
+      {
+        videoId: 'video-001',
+        positionSeconds: 12,
+        durationSeconds: 60,
+        updatedAt: new Date().toISOString(),
+      },
+    ]);
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 30));
   });
   expect(
     renderer.root
@@ -51,12 +68,14 @@ it('показывает актуальные счётчики и открыва
       .some((node) => node.props.children === 'Пока нет сохранённых видео'),
   ).toBe(false);
 
-  await ReactTestRenderer.act(() => {
-    useFavoritesStore.setState({ favoriteIds: ['video-001'] });
-    useWatchHistoryStore.setState({
-      entries: [{ videoId: 'video-002', lastWatchedAt: 1000, position: 12, duration: 60 }],
-    });
-    useSavedProgressStore.setState({ positions: { 'video-001': 12 } });
+  await ReactTestRenderer.act(async () => {
+    queryClient.setQueryData(userKeys.favorites('user-1'), [
+      { videoId: 'video-001', createdAt: new Date().toISOString() },
+    ]);
+    queryClient.setQueryData(userKeys.history('user-1'), [
+      { videoId: 'video-002', lastWatchedAt: new Date().toISOString(), completed: false },
+    ]);
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 30));
   });
   expect(
     renderer.root.findAllByProps({ accessibilityLabel: '1 в избранном' }).length,

@@ -9,7 +9,7 @@ import { usePlayerFullscreen } from './usePlayerFullscreen';
 import { useRutubePlayer } from './useRutubePlayer';
 import { useVideoPlaybackActions } from './useVideoPlaybackActions';
 import { useVideoPlaybackEvents } from './useVideoPlaybackEvents';
-import { useVideoProgress } from './useVideoProgress';
+import { useServerVideoProgress } from './useServerVideoProgress';
 import { usePlaybackSettingsStore } from '../store/usePlaybackSettingsStore';
 
 interface UseRutubeVideoPlaybackOptions {
@@ -56,7 +56,10 @@ export const useRutubeVideoPlayback = ({
     state: player,
     videoEvents,
   } = useRutubePlayer(videoId, isFocused);
-  const { actions: progressActions, saved } = useVideoProgress(videoId, isFocused);
+  const { actions: progressActions, saved } = useServerVideoProgress(videoId, isFocused);
+  useEffect(() => {
+    if (player.hasStarted) progressActions.recordStart();
+  }, [player.hasStarted, progressActions]);
   if (saved.loaded && initialStartPositionRef.current === null) {
     initialStartPositionRef.current = Math.round((saved.position ?? 0) * 1000);
   }
