@@ -1,0 +1,27 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Video {
+  id           String   @id
+  externalId   String   @unique
+  title        String
+  searchTitle  String
+  description  String?
+  thumbnailUrl String?
+  duration     Int
+  category     String?
+  author       String?
+  sourceUrl    String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  lastSyncedAt DateTime
+
+  @@index([title])
+  @@index([searchTitle])
+}

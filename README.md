@@ -1,42 +1,34 @@
 # StreamBox
 
-StreamBox — сервис для работы с медиаконтентом. Мобильное приложение получает видео из RUTUBE и отображает их пользователю. Проект состоит из мобильного клиента и backend.
+StreamBox — React Native-приложение с локальным NestJS API. Каталог и воспроизведение работают по цепочке **React Native → NestJS → SQLite / RUTUBE**. Сервер хранит нормализованные метаданные в SQLite; временные playback URL запрашивает у RUTUBE по требованию. Избранное, история и прогресс остаются на устройстве.
 
-## Состав проекта
+## Структура
 
-```text
-streambox-mobile/
-├── mobile/       # React Native-клиент для Android и iOS
-├── backend/      # Серверная часть; реализация ещё не начата
-├── docs/         # Общая и компонентная документация
-└── README.md     # Общая точка входа
+- `mobile/` — iOS/Android-клиент, React Navigation, TanStack Query, локальные Async Storage и Zustand.
+- `backend/` — NestJS API, Prisma, SQLite и слой интеграции `RutubeService`.
+- `docs/ARCHITECTURE.md` — границы системы и поток данных.
+
+## Быстрый запуск
+
+```sh
+cd backend
+npm install
+cp .env.example .env
+npm run prisma:deploy
+npm run seed:legacy
+npm run start:dev
 ```
 
-## Компоненты
+В другом терминале:
 
-### Mobile
+```sh
+cd mobile
+npm install
+cp .env.example .env
+npm start
+npm run ios # или npm run android
+```
 
-Мобильное приложение работает на React Native и TypeScript. Реализованы навигация, локальный каталог видео и воспроизведение RUTUBE-видео на экране информации; остальные продуктовые сценарии развиваются поэтапно.
+Первый импорт `seed:legacy` получает **реальные** метаданные RUTUBE для восьми старых ID `video-001`…`video-008`. Команду можно повторить: записи обновятся, дублей не будет. Новые видео можно добавлять кнопкой на Home или `POST /videos/import`. Backend должен быть запущен, пока приложение использует каталог. Для физического устройства задайте в `mobile/.env` `API_BASE_URL_DEVICE=http://<LAN-IP-компьютера>:3000` и пересоберите JS-бандл; телефон и компьютер должны находиться в одной сети.
 
-- [README мобильного приложения](mobile/README.md)
-- [Архитектура mobile](mobile/docs/ARCHITECTURE.md)
-- [Структура mobile](mobile/docs/PROJECT_STRUCTURE.md)
-- [Окружение mobile](mobile/docs/ENVIRONMENT.md)
-- [Релизы mobile](mobile/docs/RELEASE.md)
-
-### Backend
-
-Каталог backend создан, но язык, фреймворк, API и способ развёртывания пока не выбраны.
-
-- [README backend](backend/README.md)
-- [Архитектура backend](backend/docs/ARCHITECTURE.md)
-
-## Общая документация
-
-- [Архитектура всей системы](docs/ARCHITECTURE.md)
-- [Правила разработки](docs/CONTRIBUTING.md)
-- [История изменений](docs/CHANGELOG.md)
-
-## Статус
-
-В мобильной части реализованы базовая навигация, каталог, экран деталей и базовое воспроизведение RUTUBE-видео. Избранное и остальные продуктовые сценарии ещё не реализованы, backend отсутствует. Документы с будущими решениями явно помечены как целевая архитектура, чтобы не смешивать планы с фактическим состоянием.
+Команды, переменные и ограничения описаны в [backend README](backend/README.md) и [mobile README](mobile/README.md).

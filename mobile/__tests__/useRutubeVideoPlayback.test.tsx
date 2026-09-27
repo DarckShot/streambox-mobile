@@ -1,4 +1,5 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactTestRenderer from 'react-test-renderer';
 import type { OnLoadData, OnProgressData } from 'react-native-video';
 import { createAsyncStorage } from '@react-native-async-storage/async-storage/jest';
@@ -12,8 +13,8 @@ jest.mock('@react-navigation/native', () => ({
   usePreventRemove: () => undefined,
 }));
 
-jest.mock('../src/api/rutube', () => ({
-  getRutubePlaybackUrl: jest.fn(async () => 'https://example.com/video.m3u8'),
+jest.mock('../src/api/videos', () => ({
+  getVideoPlaybackUrl: jest.fn(async () => 'https://example.com/video.m3u8'),
 }));
 
 const storage = createAsyncStorage('streamboxPlaybackProgress');
@@ -24,12 +25,18 @@ it('при повторном открытии передаёт сохранён
   let renderer!: ReactTestRenderer.ReactTestRenderer;
 
   const Probe = (): null => {
-    playback = useRutubeVideoPlayback({ externalId: 'external-a', videoId: 'video-a' });
+    playback = useRutubeVideoPlayback({ videoId: 'video-a' });
     return null;
   };
 
   await ReactTestRenderer.act(async () => {
-    renderer = ReactTestRenderer.create(<Probe />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Probe />
+      </QueryClientProvider>,
+    );
   });
 
   expect(playback.mediaReady).toBe(true);
@@ -56,7 +63,13 @@ it('при повторном открытии передаёт сохранён
   expect(await loadVideoProgress('video-a')).toBe(48);
 
   await ReactTestRenderer.act(async () => {
-    renderer = ReactTestRenderer.create(<Probe />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Probe />
+      </QueryClientProvider>,
+    );
   });
 
   expect(playback.mediaReady).toBe(true);
@@ -79,12 +92,18 @@ it('сохраняет позицию потока, который не сооб
   let renderer!: ReactTestRenderer.ReactTestRenderer;
 
   const Probe = (): null => {
-    playback = useRutubeVideoPlayback({ externalId: 'external-b', videoId: 'video-b' });
+    playback = useRutubeVideoPlayback({ videoId: 'video-b' });
     return null;
   };
 
   await ReactTestRenderer.act(async () => {
-    renderer = ReactTestRenderer.create(<Probe />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Probe />
+      </QueryClientProvider>,
+    );
   });
 
   await ReactTestRenderer.act(() => {
@@ -101,7 +120,13 @@ it('сохраняет позицию потока, который не сооб
   });
 
   await ReactTestRenderer.act(async () => {
-    renderer = ReactTestRenderer.create(<Probe />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Probe />
+      </QueryClientProvider>,
+    );
   });
 
   expect(playback.source.startPosition).toBe(18000);
@@ -118,14 +143,19 @@ it('запускает Player по прямой ссылке после загр
   let renderer!: ReactTestRenderer.ReactTestRenderer;
   const Probe = (): null => {
     playback = useRutubeVideoPlayback({
-      externalId: 'external-c',
       videoId: 'video-c',
       autoPlayOnOpen: true,
     });
     return null;
   };
   await ReactTestRenderer.act(async () => {
-    renderer = ReactTestRenderer.create(<Probe />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider
+        client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
+      >
+        <Probe />
+      </QueryClientProvider>,
+    );
   });
   await ReactTestRenderer.act(() => {
     playback.handlers.onLoad({ duration: 90, currentTime: 0 } as OnLoadData);

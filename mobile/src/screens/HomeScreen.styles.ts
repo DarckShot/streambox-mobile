@@ -53,4 +53,22 @@ export const homeScreenStyles = StyleSheet.create({
   separator: {
     height: 16,
   },
+  centerState: { alignItems: 'center', justifyContent: 'center', gap: 14, paddingHorizontal: 28 },
+  stateTitle: { fontSize: 23, fontWeight: '800', textAlign: 'center' },
+  retryButton: {
+    backgroundColor: STREAMBOX_COLORS.accent,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  retryText: { color: STREAMBOX_COLORS.white, fontWeight: '700' },
+  importButton: {
+    alignSelf: 'flex-start',
+    marginTop: 8,
+    borderRadius: 13,
+    backgroundColor: STREAMBOX_COLORS.glowLight,
+    paddingHorizontal: 16,
+    paddingVertical: 11,
+  },
+  importButtonText: { color: STREAMBOX_COLORS.accent, fontSize: 14, fontWeight: '800' },
 });

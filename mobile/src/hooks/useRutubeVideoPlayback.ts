@@ -14,7 +14,6 @@ import { usePlaybackSettingsStore } from '../store/usePlaybackSettingsStore';
 
 interface UseRutubeVideoPlaybackOptions {
   autoPlayOnOpen?: boolean;
-  externalId: string;
   videoId: string;
 }
 
@@ -41,7 +40,6 @@ export interface RutubeVideoPlayback {
 
 export const useRutubeVideoPlayback = ({
   autoPlayOnOpen = false,
-  externalId,
   videoId,
 }: UseRutubeVideoPlaybackOptions): RutubeVideoPlayback => {
   const isFocused = useIsFocused();
@@ -57,7 +55,7 @@ export const useRutubeVideoPlayback = ({
     actions: playerActions,
     state: player,
     videoEvents,
-  } = useRutubePlayer(externalId, isFocused);
+  } = useRutubePlayer(videoId, isFocused);
   const { actions: progressActions, saved } = useVideoProgress(videoId, isFocused);
   if (saved.loaded && initialStartPositionRef.current === null) {
     initialStartPositionRef.current = Math.round((saved.position ?? 0) * 1000);

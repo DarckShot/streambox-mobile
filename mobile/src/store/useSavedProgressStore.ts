@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-import { VIDEO_CATALOG } from '../constants/videoCatalog';
-import { clearVideoProgress, loadVideoProgress } from '../storage/videoProgress';
+import { clearAllVideoProgress, loadAllVideoProgress } from '../storage/videoProgress';
+import { isValidVideoId } from '../utils/isValidVideoId';
 
 interface SavedProgressState {
   loaded: boolean;
@@ -12,8 +12,6 @@ interface SavedProgressState {
   clearProgress: () => Promise<void>;
 }
 
-const videoIds = VIDEO_CATALOG.map(({ id }) => id);
-const knownIds = new Set(videoIds);
 let loading: Promise<void> | null = null;
 let revision = 0;
 const changedIds = new Set<string>();
@@ -27,12 +25,15 @@ export const useSavedProgressStore = create<SavedProgressState>()((set, get) => 
     if (get().loaded) return Promise.resolve();
     if (loading) return loading;
     const startedAtRevision = revision;
-    loading = Promise.all(videoIds.map(async (id) => [id, await loadVideoProgress(id)] as const))
-      .then((results) => {
-        const positions: Record<string, number> = clearedDuringLoad ? {} : { ...get().positions };
-        for (const [id, position] of results) {
-          if (revision !== startedAtRevision && changedIds.has(id)) continue;
-          if (position !== null && !clearedDuringLoad) positions[id] = position;
+    loading = loadAllVideoProgress()
+      .then((loaded) => {
+        const positions = clearedDuringLoad ? {} : { ...loaded };
+        if (revision !== startedAtRevision) {
+          for (const id of changedIds) {
+            const current = get().positions[id];
+            if (current === undefined) delete positions[id];
+            else positions[id] = current;
+          }
         }
         changedIds.clear();
         clearedDuringLoad = false;
@@ -48,7 +49,7 @@ export const useSavedProgressStore = create<SavedProgressState>()((set, get) => 
     return loading;
   },
   setPosition: (videoId, position): void => {
-    if (!knownIds.has(videoId)) return;
+    if (!isValidVideoId(videoId)) return;
     revision += 1;
     if (!get().loaded) changedIds.add(videoId);
     const positions = { ...get().positions };
@@ -62,6 +63,6 @@ export const useSavedProgressStore = create<SavedProgressState>()((set, get) => 
     clearedDuringLoad = true;
     changedIds.clear();
     set({ positions: {}, loaded: true, resetVersion: get().resetVersion + 1 });
-    await Promise.all(videoIds.map(clearVideoProgress));
+    await clearAllVideoProgress();
   },
 }));

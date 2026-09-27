@@ -1,71 +1,28 @@
 # StreamBox Mobile
 
-Мобильный клиент StreamBox для Android и iOS на React Native и TypeScript.
-
-## Текущее состояние
-
-В приложение подключён React Navigation: корневой native stack, нижняя панель вкладок и типизированные параметры маршрутов. На Home реализован каталог на `FlashList` с локальными mock-данными RUTUBE. Выбор карточки открывает `VideoDetails` по внутреннему `videoId`; на этом же экране отображаются метаданные и встроенный плеер. Axios получает временный HLS URL из RUTUBE API, а `react-native-video` обеспечивает play/pause, seek по тапу и свайпу на таймлайне, перемотку на ±10 секунд, mute, fullscreen, loading, buffering, завершение и состояния ошибки. Позиция каждого видео сохраняется локально через Async Storage и восстанавливается при следующем открытии; после полного просмотра она сбрасывается. Избранное синхронно отображается на `VideoDetails` и `Favorites`, хранит ID видео локально через Async Storage и переживает перезапуск приложения. Остальные продуктовые маршруты представлены экранами-заглушками. `App.tsx` настраивает safe area, системную тему, `StatusBar` и корневой контейнер навигации.
-
-Поддерживаются deep links через схему `streambox://`, например:
-
-```text
-streambox://search
-streambox://videos/42
-streambox://profile/history
-streambox://settings
-```
-
-## Требования
-
-- Node.js `>= 22.11.0`;
-- npm;
-- Android Studio, Android SDK и совместимая JDK для Android;
-- macOS, Xcode, Ruby `3.2.10` и CocoaPods через Bundler для iOS.
-
-## Установка
-
-Команды выполняются из каталога `mobile/`:
-
-```sh
-npm install
-```
-
-Для iOS:
-
-```sh
-bundle install
-bundle exec pod install --project-directory=ios
-```
+React Native-клиент для iOS и Android. Каталог, поиск, детали и playback получают данные только от локального NestJS backend через единый API client и TanStack Query. Прямых вызовов RUTUBE и mock-каталога в приложении нет. Favorites, History, позиции и настройки сохраняются на устройстве.
 
 ## Запуск
 
-Запустите Metro:
+Сначала запустите backend по [инструкции](../backend/README.md). Затем из `mobile/`:
 
 ```sh
+npm install
+cp .env.example .env
 npm start
+npm run ios # или npm run android
 ```
 
-В другом терминале запустите платформу:
+По умолчанию iOS Simulator обращается к `http://localhost:3000`, Android Emulator — к `http://10.0.2.2:3000`. Для физического устройства укажите `API_BASE_URL_DEVICE=http://<LAN-IP-компьютера>:3000` в `.env`; после изменения `.env` перезапустите Metro с очисткой кеша и пересоберите приложение. Backend слушает все интерфейсы. Для release укажите доступный устройству HTTPS backend; Android release не разрешает cleartext HTTP. `.env` не коммитится, `.env.example` — шаблон.
 
-```sh
-npm run android
-# или
-npm run ios
-```
+Home показывает каталог, позволяет импортировать RUTUBE URL/ID и обновить список. VideoDetails показывает серверные метаданные и позволяет повторно синхронизировать их; Player получает временную ссылку с backend. Search выполняет серверный поиск с debounce. Временная недоступность backend показывает ошибку и кнопку повтора.
 
 ## Проверки
 
 ```sh
-npm run lint
-npm test
 npx tsc --noEmit
+npm run lint
+npm test -- --runInBand --watch=false
 ```
 
-После изменения нативных зависимостей повторно выполните `bundle exec pod install --project-directory=ios` и пересоберите приложение через `npm run ios` или `npm run android`. Обновление JavaScript через Metro не добавляет новые нативные модули в уже установленное приложение.
-
-## Документация
-
-- [Архитектура](docs/ARCHITECTURE.md)
-- [Структура каталогов](docs/PROJECT_STRUCTURE.md)
-- [Настройка окружения](docs/ENVIRONMENT.md)
-- [Подготовка релиза](docs/RELEASE.md)
+После изменения нативной конфигурации заново соберите iOS/Android-приложение. [Архитектура](docs/ARCHITECTURE.md).

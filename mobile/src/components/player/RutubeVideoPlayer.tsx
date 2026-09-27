@@ -7,7 +7,6 @@ import RutubePlayerPresentation from './RutubePlayerPresentation';
 interface RutubeVideoPlayerProps {
   autoPlayOnOpen?: boolean;
   containerStyle?: StyleProp<ViewStyle>;
-  externalId: string;
   posterUrl: string;
   videoId: string;
 }
@@ -15,11 +14,10 @@ interface RutubeVideoPlayerProps {
 const RutubeVideoPlayer = ({
   autoPlayOnOpen = false,
   containerStyle,
-  externalId,
   posterUrl,
   videoId,
 }: RutubeVideoPlayerProps): ReactElement => {
-  const playback = useRutubeVideoPlayback({ autoPlayOnOpen, externalId, videoId });
+  const playback = useRutubeVideoPlayback({ autoPlayOnOpen, videoId });
 
   return (
     <RutubePlayerPresentation

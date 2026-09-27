@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import { VIDEO_CATALOG } from '../constants/videoCatalog';
+import { isValidVideoId } from '../utils/isValidVideoId';
 import {
   loadWatchHistory,
   saveWatchHistory,
@@ -17,7 +17,6 @@ interface WatchHistoryState {
 }
 
 let loading: Promise<void> | null = null;
-const knownVideoIds = new Set(VIDEO_CATALOG.map((video) => video.id));
 
 const reportSaveError = (error: unknown): void => {
   console.warn('Не удалось сохранить историю просмотра.', error);
@@ -46,7 +45,7 @@ export const useWatchHistoryStore = create<WatchHistoryState>()((set, get) => ({
 
   recordWatch: (videoId, position, duration): void => {
     if (
-      !knownVideoIds.has(videoId) ||
+      !isValidVideoId(videoId) ||
       !Number.isFinite(position) ||
       position < 0 ||
       !Number.isFinite(duration) ||

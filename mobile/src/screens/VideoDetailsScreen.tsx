@@ -1,14 +1,24 @@
 import { useTheme } from '@react-navigation/native';
+import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useMemo, useState, type ReactElement } from 'react';
-import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
 import { FavoriteToggleButton } from '../components/favorites/FavoriteToggleButton';
 import { VideoPlaceholderIcon } from '../components/icons/VideoPlaceholderIcon';
 import RutubeVideoPlayer from '../components/player/RutubeVideoPlayer';
 import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
-import { VIDEO_CATALOG } from '../constants/videoCatalog';
+import { videoQueries } from '../api/videoQueries';
+import { ApiError } from '../api/client';
+import { useSyncVideo } from '../hooks/useVideoMutations';
 import { RootRoute } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import { videoDetailsScreenStyles as styles } from './VideoDetailsScreen.styles';
@@ -37,7 +47,25 @@ export const VideoDetailsScreen = ({
     [playerHeight],
   );
 
-  const video = VIDEO_CATALOG.find((item) => item.id === route.params.videoId);
+  const {
+    data: video,
+    isPending,
+    error,
+    refetch,
+  } = useQuery(videoQueries.detail(route.params.videoId));
+  const sync = useSyncVideo();
+
+  if (isPending) {
+    return (
+      <SafeAreaView
+        edges={VIDEO_DETAILS_SAFE_AREA_EDGES}
+        style={[styles.errorScreen, { backgroundColor: colors.background }]}
+      >
+        <ActivityIndicator size="large" color="#7C5CFC" />
+        <Text style={{ color: colors.text }}>Загружаем видео…</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (!video) {
     return (
@@ -49,10 +77,13 @@ export const VideoDetailsScreen = ({
           <View style={styles.errorIcon}>
             <VideoPlaceholderIcon color="#A89AFD" size={52} />
           </View>
-          <Text style={[styles.errorTitle, { color: colors.text }]}>Видео не найдено</Text>
+          <Text style={[styles.errorTitle, { color: colors.text }]}>
+            {error instanceof ApiError && error.kind === 'not-found'
+              ? 'Видео не найдено'
+              : 'Не удалось загрузить видео'}
+          </Text>
           <Text style={[styles.errorDescription, dark ? styles.textDark : styles.textLight]}>
-            Возможно, оно было удалено или ссылка устарела. Вернитесь в каталог и выберите другое
-            видео.
+            {error?.message ?? 'Попробуйте загрузить видео ещё раз.'}
           </Text>
           <Pressable
             accessibilityRole="button"
@@ -61,6 +92,15 @@ export const VideoDetailsScreen = ({
           >
             <Text style={styles.errorBackButtonText}>Назад к каталогу</Text>
           </Pressable>
+          {!(error instanceof ApiError && error.kind === 'not-found') ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => refetch()}
+              style={styles.errorBackButton}
+            >
+              <Text style={styles.errorBackButtonText}>Повторить</Text>
+            </Pressable>
+          ) : null}
         </View>
       </SafeAreaView>
     );
@@ -78,7 +118,6 @@ export const VideoDetailsScreen = ({
       <RutubeVideoPlayer
         autoPlayOnOpen={route.name === RootRoute.Player}
         containerStyle={isLandscape ? styles.playerLandscape : portraitPlayerStyle}
-        externalId={video.externalId}
         key={video.id}
         posterUrl={video.thumbnailUrl}
         videoId={video.id}
@@ -132,6 +171,14 @@ export const VideoDetailsScreen = ({
             </Text>
             <Text style={[styles.metaValue, { color: colors.text }]}>{video.duration}</Text>
           </View>
+          {video.author ? (
+            <View style={styles.metaRow}>
+              <Text style={[styles.metaLabel, dark ? styles.textDark : styles.textLight]}>
+                Автор
+              </Text>
+              <Text style={[styles.metaValue, { color: colors.text }]}>{video.author}</Text>
+            </View>
+          ) : null}
 
           <View style={[styles.divider, dark ? styles.dividerDark : styles.dividerLight]} />
 
@@ -156,7 +203,7 @@ export const VideoDetailsScreen = ({
                 dark ? styles.textDark : styles.textLight,
               ]}
             >
-              {video.description}
+              {video.description || 'Описание не указано.'}
             </Text>
           </View>
 
@@ -167,6 +214,21 @@ export const VideoDetailsScreen = ({
               textColor={colors.text}
               videoId={video.id}
             />
+            <Pressable
+              accessibilityRole="button"
+              disabled={sync.isPending}
+              onPress={() => sync.mutate(video.id)}
+              style={styles.syncButton}
+            >
+              <Text style={styles.syncButtonText}>
+                {sync.isPending ? 'Обновляем…' : 'Обновить данные RUTUBE'}
+              </Text>
+            </Pressable>
+            {sync.error ? (
+              <Text accessibilityRole="alert" style={styles.syncError}>
+                {sync.error.message}
+              </Text>
+            ) : null}
           </View>
         </ScrollView>
       </ScrollEdgeBlur>

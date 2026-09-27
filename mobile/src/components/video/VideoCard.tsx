@@ -48,12 +48,14 @@ const VideoCard = ({
           <VideoPlaceholderIcon color="#77738D" />
           <Text style={styles.fallbackText}>НЕТ ОБЛОЖКИ</Text>
         </View>
-        <Image
-          accessibilityIgnoresInvertColors
-          resizeMode="cover"
-          source={{ uri: thumbnailUrl }}
-          style={styles.thumbnailImage}
-        />
+        {thumbnailUrl ? (
+          <Image
+            accessibilityIgnoresInvertColors
+            resizeMode="cover"
+            source={{ uri: thumbnailUrl }}
+            style={styles.thumbnailImage}
+          />
+        ) : null}
         <Text style={styles.duration}>{duration}</Text>
       </View>
 

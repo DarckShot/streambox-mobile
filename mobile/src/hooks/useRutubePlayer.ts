@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type {
   OnBufferData,
   OnLoadData,
@@ -6,7 +7,8 @@ import type {
   OnVideoErrorData,
 } from 'react-native-video';
 
-import { getRutubePlaybackUrl } from '../api/rutube';
+import { getVideoPlaybackUrl } from '../api/videos';
+import { videoKeys } from '../api/videoQueries';
 import type { BasicVideoPlayerStatus } from '../types/player';
 import { INITIAL_RUTUBE_PLAYER_STATE, rutubePlayerReducer } from './useRutubePlayer.reducer';
 
@@ -53,7 +55,8 @@ const getPlaybackErrorMessage = (data: OnVideoErrorData): string => {
   return message ? `Ошибка воспроизведения: ${message}` : 'Не удалось воспроизвести видео.';
 };
 
-export const useRutubePlayer = (externalId: string, isActive: boolean): UseRutubePlayerResult => {
+export const useRutubePlayer = (videoId: string, isActive: boolean): UseRutubePlayerResult => {
+  const queryClient = useQueryClient();
   const [state, dispatch] = useReducer(rutubePlayerReducer, INITIAL_RUTUBE_PLAYER_STATE);
   const {
     currentTime,
@@ -75,7 +78,12 @@ export const useRutubePlayer = (externalId: string, isActive: boolean): UseRutub
       dispatch({ type: 'loadRequested' });
 
       try {
-        const url = await getRutubePlaybackUrl(externalId, controller.signal);
+        const url = await queryClient.fetchQuery({
+          queryKey: videoKeys.playback(videoId),
+          queryFn: ({ signal }) => getVideoPlaybackUrl(videoId, signal),
+          staleTime: 0,
+          gcTime: 0,
+        });
 
         if (!controller.signal.aborted) {
           dispatch({ type: 'loadSucceeded', playbackUrl: url });
@@ -94,8 +102,9 @@ export const useRutubePlayer = (externalId: string, isActive: boolean): UseRutub
 
     return () => {
       controller.abort();
+      queryClient.cancelQueries({ queryKey: videoKeys.playback(videoId) });
     };
-  }, [externalId, reloadKey]);
+  }, [queryClient, videoId, reloadKey]);
 
   useEffect(() => {
     if (!isActive) {

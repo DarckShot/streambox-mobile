@@ -1,7 +1,10 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactTestRenderer from 'react-test-renderer';
 import { Text } from 'react-native';
 
+import { videoKeys } from '../src/api/videoQueries';
+import { sampleVideo } from '../testFixtures/video';
 import { RootRoute, TabRoute } from '../src/navigation/routes';
 import { FavoritesScreen } from '../src/screens/FavoritesScreen';
 import { useFavoritesStore } from '../src/store/useFavoritesStore';
@@ -48,11 +51,17 @@ beforeEach(() => {
 it('открывает видео из избранного и сразу убирает его карточку после удаления', async () => {
   let renderer!: ReactTestRenderer.ReactTestRenderer;
 
+  const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } });
+  queryClient.setQueryData(videoKeys.detail('video-001'), sampleVideo);
   await ReactTestRenderer.act(() => {
-    renderer = ReactTestRenderer.create(<FavoritesScreen />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider client={queryClient}>
+        <FavoritesScreen />
+      </QueryClientProvider>,
+    );
   });
 
-  const cardLabel = 'Документальный фильм про космос и космические системы, Документальное, 54:12';
+  const cardLabel = 'Документальный фильм про космос, Наука, 54:13';
   expect(renderer.root.findAllByProps({ accessibilityLabel: cardLabel }).length).toBeGreaterThan(0);
   await ReactTestRenderer.act(() => {
     renderer.root

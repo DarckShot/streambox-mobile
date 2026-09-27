@@ -2,7 +2,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { type CompositeNavigationProp, useNavigation, useTheme } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { useCallback, useMemo, type ReactElement } from 'react';
+import { useCallback, type ReactElement } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,7 +10,7 @@ import { HeartIcon } from '../components/icons/HeartIcon';
 import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
 import VideoCard from '../components/video/VideoCard';
 import { STREAMBOX_COLORS } from '../constants/theme';
-import { VIDEO_CATALOG } from '../constants/videoCatalog';
+import { useVideosByIds } from '../hooks/useVideosByIds';
 import { RootRoute, TabRoute } from '../navigation/routes';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { useFavoritesStore } from '../store/useFavoritesStore';
@@ -34,10 +34,13 @@ export const FavoritesScreen = (): ReactElement => {
   const error = useFavoritesStore((state) => state.error);
   const loadFavorites = useFavoritesStore((state) => state.loadFavorites);
   const errorColor = dark ? STREAMBOX_COLORS.errorDark : STREAMBOX_COLORS.errorLight;
-  const favoriteVideos = useMemo(
-    () => VIDEO_CATALOG.filter((video) => favoriteIds.includes(video.id)),
-    [favoriteIds],
-  );
+  const {
+    byId,
+    isLoading: videosLoading,
+    error: videosError,
+    refetch: refetchVideos,
+  } = useVideosByIds(favoriteIds);
+  const favoriteVideos = favoriteIds.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
 
   const handleVideoPress = useCallback(
     (videoId: string): void => {
@@ -73,7 +76,7 @@ export const FavoritesScreen = (): ReactElement => {
         <Text style={[styles.title, { color: colors.text }]}>Избранное</Text>
         {status === 'ready' ? (
           <Text style={[styles.subtitle, dark ? styles.subtitleDark : styles.subtitleLight]}>
-            Сохранено видео: {favoriteVideos.length}
+            Сохранено видео: {favoriteIds.length}
           </Text>
         ) : null}
       </View>
@@ -107,7 +110,26 @@ export const FavoritesScreen = (): ReactElement => {
         </View>
       ) : null}
 
-      {status === 'ready' && favoriteVideos.length === 0 ? (
+      {status === 'ready' && favoriteIds.length > 0 && videosLoading ? (
+        <View style={styles.centerState}>
+          <ActivityIndicator color={STREAMBOX_COLORS.accent} size="large" />
+          <Text style={{ color: colors.text }}>Загружаем видео…</Text>
+        </View>
+      ) : null}
+
+      {status === 'ready' && videosError && !videosLoading && favoriteVideos.length === 0 ? (
+        <View style={styles.centerState}>
+          <Text accessibilityRole="alert" style={[styles.stateTitle, { color: colors.text }]}>
+            Не удалось загрузить избранное
+          </Text>
+          <Text style={{ color: colors.text }}>{videosError.message}</Text>
+          <Pressable accessibilityRole="button" onPress={refetchVideos} style={styles.actionButton}>
+            <Text style={styles.actionButtonText}>Повторить</Text>
+          </Pressable>
+        </View>
+      ) : null}
+
+      {status === 'ready' && favoriteIds.length === 0 ? (
         <View style={styles.centerState}>
           <View style={styles.emptyIcon}>
             <HeartIcon color={STREAMBOX_COLORS.accent} size={42} />

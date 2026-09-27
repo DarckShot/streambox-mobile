@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
-import { isKnownVideoId, loadFavoriteIds, saveFavoriteIds } from '../storage/favorites';
+import { loadFavoriteIds, saveFavoriteIds } from '../storage/favorites';
+import { isValidVideoId } from '../utils/isValidVideoId';
 
 export type FavoritesStatus = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -41,7 +42,7 @@ export const useFavoritesStore = create<FavoritesState>()((set, get) => ({
   toggleFavorite: async (videoId: string): Promise<void> => {
     const { favoriteIds, isSaving, status } = get();
 
-    if (status !== 'ready' || isSaving || !isKnownVideoId(videoId)) {
+    if (status !== 'ready' || isSaving || !isValidVideoId(videoId)) {
       return;
     }
 

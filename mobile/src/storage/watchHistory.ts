@@ -1,6 +1,6 @@
 import { createAsyncStorage } from '@react-native-async-storage/async-storage';
 
-import { VIDEO_CATALOG } from '../constants/videoCatalog';
+import { isValidVideoId } from '../utils/isValidVideoId';
 
 export interface WatchHistoryEntry {
   videoId: string;
@@ -11,15 +11,13 @@ export interface WatchHistoryEntry {
 
 const storage = createAsyncStorage('streamboxWatchHistory');
 const STORAGE_KEY = 'entries';
-const knownIds = new Set(VIDEO_CATALOG.map((video) => video.id));
 let pendingWrite: Promise<void> = Promise.resolve();
 
 const isEntry = (value: unknown): value is WatchHistoryEntry => {
   if (typeof value !== 'object' || value === null) return false;
   const entry = value as Partial<WatchHistoryEntry>;
   return (
-    typeof entry.videoId === 'string' &&
-    knownIds.has(entry.videoId) &&
+    isValidVideoId(entry.videoId) &&
     typeof entry.lastWatchedAt === 'number' &&
     Number.isFinite(entry.lastWatchedAt) &&
     entry.lastWatchedAt > 0 &&

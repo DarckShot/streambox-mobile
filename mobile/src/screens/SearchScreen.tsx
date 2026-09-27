@@ -8,6 +8,7 @@ import { Pressable, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SearchIcon } from '../components/icons/SearchIcon';
+import { videoQueries } from '../api/videoQueries';
 import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
 import VideoCard from '../components/video/VideoCard';
 import { STREAMBOX_COLORS } from '../constants/theme';
@@ -16,7 +17,6 @@ import { RootRoute, TabRoute } from '../navigation/routes';
 import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { useSearchStore } from '../store/useSearchStore';
 import type { Video } from '../types/video';
-import { normalizeSearchQuery, searchVideoCatalog } from '../utils/searchVideoCatalog';
 import { searchScreenStyles as styles } from './SearchScreen.styles';
 
 type SearchNavigation = CompositeNavigationProp<
@@ -34,14 +34,18 @@ export const SearchScreen = (): ReactElement => {
   const query = useSearchStore((state) => state.query);
   const setQuery = useSearchStore((state) => state.setQuery);
   const clearQuery = useSearchStore((state) => state.clearQuery);
-  const normalizedQuery = normalizeSearchQuery(query);
+  const normalizedQuery = query.trim();
   const debouncedQuery = useDebouncedValue(normalizedQuery, SEARCH_DEBOUNCE_MS);
   const isWaiting = normalizedQuery !== debouncedQuery;
-  const { data: results = [] } = useQuery({
-    queryKey: ['video-search', debouncedQuery],
-    queryFn: () => searchVideoCatalog(debouncedQuery),
+  const {
+    data: results = [],
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    ...videoQueries.list(debouncedQuery),
     enabled: debouncedQuery.length > 0,
-    staleTime: Infinity,
   });
 
   const handleVideoPress = useCallback(
@@ -110,7 +114,25 @@ export const SearchScreen = (): ReactElement => {
             Введите название видео, чтобы найти его в каталоге.
           </Text>
         </View>
-      ) : isWaiting ? null : results.length === 0 ? (
+      ) : isWaiting || isPending ? (
+        <View style={styles.centerState}>
+          <Text style={{ color: colors.text }}>Ищем видео…</Text>
+        </View>
+      ) : isError ? (
+        <View style={styles.centerState}>
+          <Text accessibilityRole="alert" style={[styles.stateTitle, { color: colors.text }]}>
+            Не удалось выполнить поиск
+          </Text>
+          <Text style={[styles.stateDescription, { color: colors.text }]}>{error.message}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => refetch()}
+            style={styles.clearButton}
+          >
+            <Text style={{ color: STREAMBOX_COLORS.accent }}>Повторить</Text>
+          </Pressable>
+        </View>
+      ) : results.length === 0 ? (
         <View style={styles.centerState}>
           <Text style={[styles.stateTitle, { color: colors.text }]}>Ничего не найдено</Text>
           <Text

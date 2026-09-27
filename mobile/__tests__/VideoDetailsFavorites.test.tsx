@@ -1,7 +1,10 @@
 import React from 'react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import ReactTestRenderer from 'react-test-renderer';
 import { createAsyncStorage } from '@react-native-async-storage/async-storage/jest';
 
+import { videoKeys } from '../src/api/videoQueries';
+import { sampleVideo } from '../testFixtures/video';
 import { RootRoute } from '../src/navigation/routes';
 import { VideoDetailsScreen } from '../src/screens/VideoDetailsScreen';
 import { useFavoritesStore } from '../src/store/useFavoritesStore';
@@ -31,8 +34,14 @@ it('кнопка VideoDetails добавляет и удаляет видео, �
   } as unknown as Parameters<typeof VideoDetailsScreen>[0];
   let renderer!: ReactTestRenderer.ReactTestRenderer;
 
+  const queryClient = new QueryClient({ defaultOptions: { queries: { gcTime: 0 } } });
+  queryClient.setQueryData(videoKeys.detail('video-001'), sampleVideo);
   await ReactTestRenderer.act(() => {
-    renderer = ReactTestRenderer.create(<VideoDetailsScreen {...props} />);
+    renderer = ReactTestRenderer.create(
+      <QueryClientProvider client={queryClient}>
+        <VideoDetailsScreen {...props} />
+      </QueryClientProvider>,
+    );
   });
 
   const pressFavorite = (label: string): void => {

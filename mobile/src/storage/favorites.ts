@@ -1,22 +1,16 @@
 import { createAsyncStorage } from '@react-native-async-storage/async-storage';
-
-import { VIDEO_CATALOG } from '../constants/videoCatalog';
+import { isValidVideoId } from '../utils/isValidVideoId';
 
 const storage = createAsyncStorage('streamboxFavorites');
 const FAVORITE_VIDEO_IDS_KEY = 'videoIds';
-const knownVideoIds = new Set(VIDEO_CATALOG.map((video) => video.id));
 
 export const normalizeFavoriteIds = (value: unknown): string[] => {
   if (!Array.isArray(value)) {
     return [];
   }
 
-  return Array.from(
-    new Set(value.filter((id): id is string => typeof id === 'string' && knownVideoIds.has(id))),
-  );
+  return Array.from(new Set(value.filter(isValidVideoId)));
 };
-
-export const isKnownVideoId = (videoId: string): boolean => knownVideoIds.has(videoId);
 
 export const loadFavoriteIds = async (): Promise<string[]> => {
   const raw = await storage.getItem(FAVORITE_VIDEO_IDS_KEY);

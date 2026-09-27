@@ -1,12 +1,12 @@
 import { useNavigation, useTheme } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
-import { useCallback, useMemo, type ReactElement } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { useCallback, type ReactElement } from 'react';
+import { ActivityIndicator, Alert, Pressable, Text, View } from 'react-native';
 
 import VideoCard from '../components/video/VideoCard';
 import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
-import { VIDEO_CATALOG } from '../constants/videoCatalog';
+import { useVideosByIds } from '../hooks/useVideosByIds';
 import { RootRoute } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
 import type { WatchHistoryEntry } from '../storage/watchHistory';
@@ -16,7 +16,6 @@ import { formatPlaybackTime } from '../utils/formatPlaybackTime';
 import { historyScreenStyles as styles } from './HistoryScreen.styles';
 
 type HistoryItem = { entry: WatchHistoryEntry; video: Video };
-const videosById = new Map(VIDEO_CATALOG.map((video) => [video.id, video]));
 const keyExtractor = (item: HistoryItem): string => item.video.id;
 const formatDate = (timestamp: number): string =>
   new Date(timestamp).toLocaleString('ru-RU', {
@@ -33,14 +32,16 @@ export const HistoryScreen = (): ReactElement => {
   const loaded = useWatchHistoryStore((state) => state.loaded);
   const error = useWatchHistoryStore((state) => state.error);
   const clearHistory = useWatchHistoryStore((state) => state.clearHistory);
-  const items = useMemo(
-    () =>
-      entries.flatMap((entry) => {
-        const video = videosById.get(entry.videoId);
-        return video ? [{ entry, video }] : [];
-      }),
-    [entries],
-  );
+  const {
+    byId,
+    isLoading: videosLoading,
+    error: videosError,
+    refetch: refetchVideos,
+  } = useVideosByIds(entries.map((entry) => entry.videoId));
+  const items = entries.flatMap((entry) => {
+    const video = byId.get(entry.videoId);
+    return video ? [{ entry, video }] : [];
+  });
 
   const handleVideoPress = useCallback(
     (videoId: string): void => navigation.navigate(RootRoute.VideoDetails, { videoId }),
@@ -123,7 +124,22 @@ export const HistoryScreen = (): ReactElement => {
         <View style={styles.centerState}>
           <Text style={[styles.stateText, { color: colors.text }]}>Загружаем историю…</Text>
         </View>
-      ) : items.length === 0 ? (
+      ) : entries.length > 0 && videosLoading && items.length === 0 ? (
+        <View style={styles.centerState}>
+          <ActivityIndicator />
+          <Text style={{ color: colors.text }}>Загружаем видео…</Text>
+        </View>
+      ) : entries.length > 0 && videosError && items.length === 0 ? (
+        <View style={styles.centerState}>
+          <Text accessibilityRole="alert" style={[styles.stateTitle, { color: colors.text }]}>
+            Не удалось загрузить видео
+          </Text>
+          <Text style={{ color: colors.text }}>{videosError.message}</Text>
+          <Pressable accessibilityRole="button" onPress={refetchVideos} style={styles.clearButton}>
+            <Text style={styles.clearText}>Повторить</Text>
+          </Pressable>
+        </View>
+      ) : entries.length === 0 ? (
         <View style={styles.centerState}>
           <Text style={[styles.stateTitle, { color: colors.text }]}>История пока пуста</Text>
           <Text style={[styles.stateText, dark ? styles.textDark : styles.textLight]}>

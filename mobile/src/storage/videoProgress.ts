@@ -5,6 +5,41 @@ const pendingWrites = new Map<string, Promise<void>>();
 
 const keyForVideo = (videoId: string): string => `video:${encodeURIComponent(videoId)}`;
 
+export const loadAllVideoProgress = async (): Promise<Record<string, number>> => {
+  const keys = (await storage.getAllKeys()).filter((key) => key.startsWith('video:'));
+  const entries = await Promise.all(
+    keys.map(async (key) => {
+      try {
+        const videoId = decodeURIComponent(key.slice('video:'.length));
+        return [videoId, await loadVideoProgress(videoId)] as const;
+      } catch {
+        return null;
+      }
+    }),
+  );
+  const positions: Record<string, number> = {};
+  for (const entry of entries) {
+    if (entry && entry[1] !== null) positions[entry[0]] = entry[1];
+  }
+  return positions;
+};
+
+export const clearAllVideoProgress = async (): Promise<void> => {
+  const keys = (await storage.getAllKeys()).filter((key) => key.startsWith('video:'));
+  await Promise.all(
+    keys.map(async (key) => {
+      let videoId: string;
+      try {
+        videoId = decodeURIComponent(key.slice('video:'.length));
+      } catch {
+        await storage.removeItem(key);
+        return;
+      }
+      await clearVideoProgress(videoId);
+    }),
+  );
+};
+
 const enqueueWrite = (videoId: string, operation: () => Promise<void>): Promise<void> => {
   const previous = pendingWrites.get(videoId) ?? Promise.resolve();
   const next = previous.catch(() => undefined).then(operation);

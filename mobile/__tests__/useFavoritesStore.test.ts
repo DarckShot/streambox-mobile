@@ -24,7 +24,7 @@ it('добавляет, удаляет и восстанавливает изб�
   await Promise.all([firstPress, rapidSecondPress]);
 
   await useFavoritesStore.getState().toggleFavorite('video-002');
-  await useFavoritesStore.getState().toggleFavorite('unknown');
+  await useFavoritesStore.getState().toggleFavorite('bad id');
   expect(useFavoritesStore.getState().favoriteIds).toEqual(['video-001', 'video-002']);
 
   useFavoritesStore.setState({ favoriteIds: [], status: 'idle' });

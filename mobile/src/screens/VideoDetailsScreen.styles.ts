@@ -139,6 +139,9 @@ export const videoDetailsScreenStyles = StyleSheet.create({
     gap: 12,
     paddingTop: 8,
   },
+  syncButton: { alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 8 },
+  syncButtonText: { color: STREAMBOX_COLORS.accent, fontSize: 14, fontWeight: '700' },
+  syncError: { color: STREAMBOX_COLORS.errorLight, fontSize: 13, textAlign: 'center' },
   buttonPressed: {
     opacity: 0.82,
     transform: [{ scale: 0.99 }],
