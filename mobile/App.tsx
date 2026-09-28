@@ -6,6 +6,7 @@ import { queryClient } from './src/api/queryClient';
 import { AuthProvider } from './src/auth/AuthProvider';
 import { useAppInitialization } from './src/hooks/useAppInitialization';
 import { AppNavigation } from './src/navigation/AppNavigation';
+import { OfflineBanner } from './src/components/network/OfflineBanner';
 
 export { queryClient } from './src/api/queryClient';
 
@@ -18,7 +19,9 @@ const App = () => {
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <AppNavigation dark={isDarkMode} />
+          <OfflineBanner>
+            <AppNavigation dark={isDarkMode} />
+          </OfflineBanner>
         </AuthProvider>
       </QueryClientProvider>
     </SafeAreaProvider>

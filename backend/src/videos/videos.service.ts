@@ -6,14 +6,12 @@ import { RutubeService } from '../rutube/rutube.service';
 import { LEGACY_VIDEO_IDS } from './legacy-video-ids';
 
 export type VideoResponse = Omit<Video, 'searchTitle'>;
+const METADATA_FRESH_MS = 60 * 60 * 1000;
 const toResponse = ({ searchTitle: _searchTitle, ...video }: Video): VideoResponse => video;
 
 @Injectable()
 export class VideosService {
-  constructor(
-    private readonly prisma: PrismaService,
-    private readonly rutube: RutubeService,
-  ) {}
+  constructor(private readonly prisma: PrismaService, private readonly rutube: RutubeService) {}
 
   async list(search?: string): Promise<VideoResponse[]> {
     const query = search?.trim().toLocaleLowerCase('ru-RU');
@@ -32,6 +30,9 @@ export class VideosService {
 
   async import(input: string): Promise<VideoResponse> {
     const externalId = this.rutube.extractExternalId(input);
+    const existing = await this.prisma.video.findUnique({ where: { externalId } });
+    if (existing?.lastSyncedAt && Date.now() - existing.lastSyncedAt.getTime() < METADATA_FRESH_MS)
+      return toResponse(existing);
     return this.upsertFromRutube(externalId);
   }
 

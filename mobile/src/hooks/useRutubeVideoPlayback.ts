@@ -1,5 +1,6 @@
 import { useIsFocused, usePreventRemove } from '@react-navigation/native';
-import { useEffect, useMemo, useRef, type RefObject } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
+import { AppState } from 'react-native';
 import type { OnLoadData, OnProgressData, VideoRef } from 'react-native-video';
 
 import type { BasicVideoPlayerStatus } from '../types/player';
@@ -43,6 +44,16 @@ export const useRutubeVideoPlayback = ({
   videoId,
 }: UseRutubeVideoPlaybackOptions): RutubeVideoPlayback => {
   const isFocused = useIsFocused();
+  const [appActive, setAppActive] = useState(
+    AppState.currentState !== 'background' && AppState.currentState !== 'inactive',
+  );
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) =>
+      setAppActive(state === 'active'),
+    );
+    return () => subscription.remove();
+  }, []);
+  const isActive = isFocused && appActive;
   const videoRef = useRef<VideoRef>(null);
   const initialStartPositionRef = useRef<number | null>(null);
   const autoStartedRef = useRef(false);
@@ -51,12 +62,8 @@ export const useRutubeVideoPlayback = ({
   useEffect(() => {
     usePlaybackSettingsStore.getState().loadSettings();
   }, []);
-  const {
-    actions: playerActions,
-    state: player,
-    videoEvents,
-  } = useRutubePlayer(videoId, isFocused);
-  const { actions: progressActions, saved } = useServerVideoProgress(videoId, isFocused);
+  const { actions: playerActions, state: player, videoEvents } = useRutubePlayer(videoId, isActive);
+  const { actions: progressActions, saved } = useServerVideoProgress(videoId, isActive);
   useEffect(() => {
     if (player.hasStarted) progressActions.recordStart();
   }, [player.hasStarted, progressActions]);
@@ -65,7 +72,7 @@ export const useRutubeVideoPlayback = ({
   }
   const canShowControls = player.hasStarted && player.status !== 'ended';
   const controls = usePlayerControls(canShowControls);
-  const fullscreen = usePlayerFullscreen(player.currentTime, player.hasStarted && isFocused);
+  const fullscreen = usePlayerFullscreen(player.currentTime, player.hasStarted && isActive);
   usePreventRemove(fullscreen.state.mounted, fullscreen.actions.close);
 
   const actions = useVideoPlaybackActions({
@@ -77,7 +84,7 @@ export const useRutubeVideoPlayback = ({
     videoRef,
   });
   const { ready: resumeReady, recordMediaLoad } = useInitialPlaybackResume({
-    isFocused,
+    isFocused: isActive,
     onDiscard: actions.discardSavedPosition,
     onRestore: actions.restoreSavedPosition,
     saved: { ...saved, loaded: saved.loaded && settingsLoaded },
@@ -105,7 +112,7 @@ export const useRutubeVideoPlayback = ({
       !autoPlayOnOpen ||
       autoStartedRef.current ||
       !resumeReady ||
-      !isFocused ||
+      !isActive ||
       saved.position !== null ||
       player.hasStarted ||
       !player.playbackUrl
@@ -115,7 +122,7 @@ export const useRutubeVideoPlayback = ({
     playerActions.togglePlayback();
   }, [
     autoPlayOnOpen,
-    isFocused,
+    isActive,
     player.hasStarted,
     player.playbackUrl,
     playerActions,

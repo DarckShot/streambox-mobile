@@ -5,9 +5,9 @@ import { FlashList, type ListRenderItemInfo } from '@shopify/flash-list';
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, type ReactElement } from 'react';
 import { Pressable, Text, TextInput, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SearchIcon } from '../components/icons/SearchIcon';
+import { TabSafeAreaView } from '../components/layout/TabSafeAreaView';
 import { videoQueries } from '../api/videoQueries';
 import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
 import VideoCard from '../components/video/VideoCard';
@@ -18,6 +18,7 @@ import type { MainTabParamList, RootStackParamList } from '../navigation/types';
 import { useSearchStore } from '../store/useSearchStore';
 import type { Video } from '../types/video';
 import { searchScreenStyles as styles } from './SearchScreen.styles';
+import { useOnline } from '../services/networkState';
 
 type SearchNavigation = CompositeNavigationProp<
   BottomTabNavigationProp<MainTabParamList, TabRoute.Search>,
@@ -31,6 +32,7 @@ const ItemSeparator = (): ReactElement => <View style={styles.separator} />;
 export const SearchScreen = (): ReactElement => {
   const navigation = useNavigation<SearchNavigation>();
   const { colors, dark } = useTheme();
+  const online = useOnline();
   const query = useSearchStore((state) => state.query);
   const setQuery = useSearchStore((state) => state.setQuery);
   const clearQuery = useSearchStore((state) => state.clearQuery);
@@ -70,7 +72,7 @@ export const SearchScreen = (): ReactElement => {
   );
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
+    <TabSafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
         <Text style={styles.eyebrow}>Исследуйте</Text>
         <Text style={[styles.title, { color: colors.text }]}>Поиск</Text>
@@ -114,11 +116,18 @@ export const SearchScreen = (): ReactElement => {
             Введите название видео, чтобы найти его в каталоге.
           </Text>
         </View>
+      ) : !online && isPending ? (
+        <View style={styles.centerState}>
+          <Text style={[styles.stateTitle, { color: colors.text }]}>Нет подключения</Text>
+          <Text style={{ color: colors.text }}>
+            Поиск станет доступен после восстановления сети.
+          </Text>
+        </View>
       ) : isWaiting || isPending ? (
         <View style={styles.centerState}>
           <Text style={{ color: colors.text }}>Ищем видео…</Text>
         </View>
-      ) : isError ? (
+      ) : isError && results.length === 0 ? (
         <View style={styles.centerState}>
           <Text accessibilityRole="alert" style={[styles.stateTitle, { color: colors.text }]}>
             Не удалось выполнить поиск
@@ -155,6 +164,6 @@ export const SearchScreen = (): ReactElement => {
           />
         </ScrollEdgeBlur>
       )}
-    </SafeAreaView>
+    </TabSafeAreaView>
   );
 };

@@ -5,6 +5,7 @@ import { STREAMBOX_COLORS } from '../../constants/theme';
 import { useFavoriteMutation, useUserCollections } from '../../hooks/useUserData';
 import { HeartIcon } from '../icons/HeartIcon';
 import { favoriteToggleButtonStyles as styles } from './FavoriteToggleButton.styles';
+import { useOnline } from '../../services/networkState';
 
 interface FavoriteToggleButtonProps {
   compact: boolean;
@@ -37,9 +38,19 @@ export const FavoriteToggleButton = ({
   videoId,
 }: FavoriteToggleButtonProps): ReactElement => {
   const { userId, favorites } = useUserCollections();
+  const online = useOnline();
   const mutation = useFavoriteMutation(userId);
   const isFavorite = favorites.data?.some((item) => item.videoId === videoId) ?? false;
-  const status = favorites.isPending ? 'loading' : favorites.isError ? 'error' : 'ready';
+  const status =
+    !online && userId
+      ? 'ready'
+      : favorites.data
+      ? 'ready'
+      : favorites.isPending
+      ? 'loading'
+      : favorites.isError
+      ? 'error'
+      : 'ready';
   const isSaving = mutation.isPending;
   const error = mutation.error?.message ?? favorites.error?.message;
   const disabled = status !== 'ready' || isSaving;

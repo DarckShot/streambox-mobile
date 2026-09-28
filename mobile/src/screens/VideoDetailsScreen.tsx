@@ -1,26 +1,18 @@
 import { useTheme } from '@react-navigation/native';
 import { useQuery } from '@tanstack/react-query';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useMemo, useState, type ReactElement } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  ScrollView,
-  Text,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import type { ReactElement } from 'react';
+import { Pressable, Text } from 'react-native';
 import { SafeAreaView, type Edge } from 'react-native-safe-area-context';
 
-import { FavoriteToggleButton } from '../components/favorites/FavoriteToggleButton';
-import { VideoPlaceholderIcon } from '../components/icons/VideoPlaceholderIcon';
-import RutubeVideoPlayer from '../components/player/RutubeVideoPlayer';
-import { ScrollEdgeBlur } from '../components/scroll/ScrollEdgeBlur';
 import { videoQueries } from '../api/videoQueries';
-import { ApiError } from '../api/client';
-import { useSyncVideo } from '../hooks/useVideoMutations';
+import RutubeVideoPlayer from '../components/player/RutubeVideoPlayer';
+import { VideoDetailsBody } from '../components/videoDetails/VideoDetailsBody';
+import { VideoDetailsState } from '../components/videoDetails/VideoDetailsState';
+import { useVideoDetailsLayout } from '../hooks/useVideoDetailsLayout';
 import { RootRoute } from '../navigation/routes';
 import type { RootStackParamList } from '../navigation/types';
+import { useOnline } from '../services/networkState';
 import { videoDetailsScreenStyles as styles } from './VideoDetailsScreen.styles';
 
 type VideoDetailsScreenProps = NativeStackScreenProps<
@@ -28,210 +20,69 @@ type VideoDetailsScreenProps = NativeStackScreenProps<
   RootRoute.VideoDetails | RootRoute.Player
 >;
 
-const VIDEO_DETAILS_SAFE_AREA_EDGES: Edge[] = ['left', 'right', 'bottom'];
+const SAFE_AREA_EDGES: Edge[] = ['left', 'right', 'bottom'];
 
 export const VideoDetailsScreen = ({
   navigation,
   route,
 }: VideoDetailsScreenProps): ReactElement => {
   const { colors, dark } = useTheme();
-  const { height, width } = useWindowDimensions();
-  const isLandscape = width > height;
-  const isCompact = height < 760 || isLandscape;
-  const titleLineLimit = isCompact ? 1 : 2;
-  const [isTitleExpanded, setIsTitleExpanded] = useState(false);
-  const [isTitleOverflowing, setIsTitleOverflowing] = useState(false);
-  const playerHeight = Math.min(width * (9 / 16), height * 0.29);
-  const portraitPlayerStyle = useMemo(
-    () => [styles.playerPortrait, { height: playerHeight }],
-    [playerHeight],
-  );
-
+  const online = useOnline();
+  const layout = useVideoDetailsLayout();
   const {
     data: video,
     isPending,
     error,
     refetch,
   } = useQuery(videoQueries.detail(route.params.videoId));
-  const sync = useSyncVideo();
 
-  if (isPending) {
+  if (isPending || !video)
     return (
-      <SafeAreaView
-        edges={VIDEO_DETAILS_SAFE_AREA_EDGES}
-        style={[styles.errorScreen, { backgroundColor: colors.background }]}
-      >
-        <ActivityIndicator size="large" color="#7C5CFC" />
-        <Text style={{ color: colors.text }}>Загружаем видео…</Text>
-      </SafeAreaView>
+      <VideoDetailsState
+        backgroundColor={colors.background}
+        dark={dark}
+        error={error}
+        loading={isPending}
+        online={online}
+        onBack={navigation.goBack}
+        onRetry={() => void refetch()}
+        textColor={colors.text}
+      />
     );
-  }
-
-  if (!video) {
-    return (
-      <SafeAreaView
-        edges={VIDEO_DETAILS_SAFE_AREA_EDGES}
-        style={[styles.errorScreen, { backgroundColor: colors.background }]}
-      >
-        <View style={[styles.errorCard, dark ? styles.surfaceDark : styles.surfaceLight]}>
-          <View style={styles.errorIcon}>
-            <VideoPlaceholderIcon color="#A89AFD" size={52} />
-          </View>
-          <Text style={[styles.errorTitle, { color: colors.text }]}>
-            {error instanceof ApiError && error.kind === 'not-found'
-              ? 'Видео не найдено'
-              : 'Не удалось загрузить видео'}
-          </Text>
-          <Text style={[styles.errorDescription, dark ? styles.textDark : styles.textLight]}>
-            {error?.message ?? 'Попробуйте загрузить видео ещё раз.'}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={navigation.goBack}
-            style={({ pressed }) => [styles.errorBackButton, pressed ? styles.buttonPressed : null]}
-          >
-            <Text style={styles.errorBackButtonText}>Назад к каталогу</Text>
-          </Pressable>
-          {!(error instanceof ApiError && error.kind === 'not-found') ? (
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => refetch()}
-              style={styles.errorBackButton}
-            >
-              <Text style={styles.errorBackButtonText}>Повторить</Text>
-            </Pressable>
-          ) : null}
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView
-      edges={VIDEO_DETAILS_SAFE_AREA_EDGES}
+      edges={SAFE_AREA_EDGES}
       style={[
         styles.screen,
-        isLandscape ? styles.screenLandscape : null,
+        layout.isLandscape ? styles.screenLandscape : null,
         { backgroundColor: colors.background },
       ]}
     >
       <RutubeVideoPlayer
         autoPlayOnOpen={route.name === RootRoute.Player}
-        containerStyle={isLandscape ? styles.playerLandscape : portraitPlayerStyle}
+        containerStyle={layout.isLandscape ? styles.playerLandscape : layout.portraitPlayerStyle}
         key={video.id}
         posterUrl={video.thumbnailUrl}
         videoId={video.id}
       />
-
-      <ScrollEdgeBlur>
-        <ScrollView
-          style={styles.detailsScroll}
-          contentContainerStyle={[styles.details, isCompact ? styles.detailsCompact : null]}
+      {error ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void refetch()}
+          style={styles.syncButton}
         >
-          <View style={styles.categoryRow}>
-            <View style={styles.categoryMark} />
-            <Text style={styles.category}>{video.category}</Text>
-          </View>
-
-          <View style={styles.titleBlock}>
-            <Text
-              accessible={false}
-              importantForAccessibility="no"
-              onTextLayout={(event) => {
-                setIsTitleOverflowing(event.nativeEvent.lines.length > titleLineLimit);
-              }}
-              style={[styles.title, isCompact ? styles.titleCompact : null, styles.titleMeasure]}
-            >
-              {video.title}
-            </Text>
-            <Text
-              ellipsizeMode="tail"
-              numberOfLines={isTitleExpanded ? undefined : titleLineLimit}
-              style={[styles.title, isCompact ? styles.titleCompact : null, { color: colors.text }]}
-            >
-              {video.title}
-            </Text>
-            {isTitleOverflowing ? (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityState={{ expanded: isTitleExpanded }}
-                onPress={() => setIsTitleExpanded((expanded) => !expanded)}
-                style={styles.titleToggle}
-              >
-                <Text style={styles.titleToggleText}>
-                  {isTitleExpanded ? 'Свернуть' : 'Показать полностью'}
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-
-          <View style={styles.metaRow}>
-            <Text style={[styles.metaLabel, dark ? styles.textDark : styles.textLight]}>
-              Длительность
-            </Text>
-            <Text style={[styles.metaValue, { color: colors.text }]}>{video.duration}</Text>
-          </View>
-          {video.author ? (
-            <View style={styles.metaRow}>
-              <Text style={[styles.metaLabel, dark ? styles.textDark : styles.textLight]}>
-                Автор
-              </Text>
-              <Text style={[styles.metaValue, { color: colors.text }]}>{video.author}</Text>
-            </View>
-          ) : null}
-
-          <View style={[styles.divider, dark ? styles.dividerDark : styles.dividerLight]} />
-
-          <View
-            style={[styles.descriptionBlock, isCompact ? styles.descriptionBlockCompact : null]}
-          >
-            <Text
-              style={[
-                styles.sectionTitle,
-                isCompact ? styles.sectionTitleCompact : null,
-                { color: colors.text },
-              ]}
-            >
-              О видео
-            </Text>
-            <Text
-              ellipsizeMode="tail"
-              numberOfLines={isLandscape ? 3 : isCompact ? 2 : 4}
-              style={[
-                styles.description,
-                isCompact ? styles.descriptionCompact : null,
-                dark ? styles.textDark : styles.textLight,
-              ]}
-            >
-              {video.description || 'Описание не указано.'}
-            </Text>
-          </View>
-
-          <View style={styles.actions}>
-            <FavoriteToggleButton
-              compact={isCompact}
-              isDark={dark}
-              textColor={colors.text}
-              videoId={video.id}
-            />
-            <Pressable
-              accessibilityRole="button"
-              disabled={sync.isPending}
-              onPress={() => sync.mutate(video.id)}
-              style={styles.syncButton}
-            >
-              <Text style={styles.syncButtonText}>
-                {sync.isPending ? 'Обновляем…' : 'Обновить данные RUTUBE'}
-              </Text>
-            </Pressable>
-            {sync.error ? (
-              <Text accessibilityRole="alert" style={styles.syncError}>
-                {sync.error.message}
-              </Text>
-            ) : null}
-          </View>
-        </ScrollView>
-      </ScrollEdgeBlur>
+          <Text style={styles.syncButtonText}>Показаны сохранённые данные · Повторить</Text>
+        </Pressable>
+      ) : null}
+      <VideoDetailsBody
+        dark={dark}
+        isCompact={layout.isCompact}
+        isLandscape={layout.isLandscape}
+        key={`details-${video.id}`}
+        textColor={colors.text}
+        video={video}
+      />
     </SafeAreaView>
   );
 };

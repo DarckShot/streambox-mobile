@@ -2,7 +2,7 @@ import { getStateFromPath, type LinkingOptions } from '@react-navigation/native'
 
 import { RootRoute, ROUTE_PATHS, TabRoute } from './routes';
 import type { RootStackParamList } from './types';
-import { getAccessToken } from '../auth/session';
+import { hasActiveSession } from '../auth/session';
 
 export const DEEP_LINK_PREFIXES = ['streambox://'];
 let pendingPrivatePath: string | null = null;
@@ -39,7 +39,7 @@ export const LINKING_OPTIONS: LinkingOptions<RootStackParamList> = {
   config: LINKING_CONFIG,
   getStateFromPath: (path, config) => {
     try {
-      if (!getAccessToken() && path !== ROUTE_PATHS.LOGIN && path !== ROUTE_PATHS.REGISTER) {
+      if (!hasActiveSession() && path !== ROUTE_PATHS.LOGIN && path !== ROUTE_PATHS.REGISTER) {
         pendingPrivatePath = path;
         return getStateFromPath(ROUTE_PATHS.LOGIN, config);
       }

@@ -25,7 +25,10 @@ const request = async <T>(operation: () => Promise<{ data: T }>): Promise<T> => 
     const response = await operation();
     return response.data;
   } catch (error: unknown) {
-    throw toApiError(error);
+    const normalized = toApiError(error);
+    if (normalized.kind !== 'cancelled')
+      console.warn('Ошибка видео API:', normalized.kind, normalized.status ?? 'network');
+    throw normalized;
   }
 };
 

@@ -1,7 +1,7 @@
 import { LINKING_CONFIG, LINKING_OPTIONS } from '../src/navigation/linking';
 import { RootRoute, TabRoute } from '../src/navigation/routes';
 
-jest.mock('../src/auth/session', () => ({ getAccessToken: () => 'test-access-token' }));
+jest.mock('../src/auth/session', () => ({ hasActiveSession: () => true }));
 
 const parse = (path: string) => LINKING_OPTIONS.getStateFromPath!(path, LINKING_CONFIG);
 

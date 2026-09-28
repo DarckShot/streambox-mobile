@@ -6,7 +6,10 @@ import type { OnLoadData, OnProgressData } from 'react-native-video';
 import { useRutubeVideoPlayback } from '../src/hooks/useRutubeVideoPlayback';
 import { userKeys } from '../src/api/userQueries';
 import { usePlaybackSettingsStore } from '../src/store/usePlaybackSettingsStore';
-import { recordWatch } from '../src/api/me';
+import { getPendingActions } from '../src/services/offlineQueue';
+
+const queued = (videoId: string, kind: 'progress' | 'history') =>
+  getPendingActions('user-1').find((action) => action.videoId === videoId && action.kind === kind);
 
 jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
@@ -73,19 +76,24 @@ it('при повторном открытии передаёт сохранён
     playback.handlers.onProgress({ currentTime: 42 } as OnProgressData);
   });
 
-  expect(mockPositions.get('video-a')).toBe(42);
+  await ReactTestRenderer.act(async () => {
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
+  });
+  expect(queued('video-a', 'progress')).toEqual(expect.objectContaining({ position: 42 }));
 
   await ReactTestRenderer.act(() => {
     playback.handlers.onProgress({ currentTime: 48 } as OnProgressData);
   });
-  expect(mockPositions.get('video-a')).toBe(42);
+  expect(queued('video-a', 'progress')).toEqual(expect.objectContaining({ position: 42 }));
 
   await ReactTestRenderer.act(() => {
     renderer.unmount();
   });
 
-  await new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
-  expect(mockPositions.get('video-a')).toBe(48);
+  await ReactTestRenderer.act(async () => {
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
+  });
+  expect(queued('video-a', 'progress')).toEqual(expect.objectContaining({ position: 48 }));
 
   await ReactTestRenderer.act(async () => {
     renderer = ReactTestRenderer.create(
@@ -134,7 +142,10 @@ it('сохраняет позицию потока, который не сооб
     playback.handlers.onProgress({ currentTime: 18 } as OnProgressData);
   });
 
-  expect(mockPositions.get('video-b')).toBe(18);
+  await ReactTestRenderer.act(async () => {
+    await new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
+  });
+  expect(queued('video-b', 'progress')).toEqual(expect.objectContaining({ position: 18 }));
 
   await ReactTestRenderer.act(() => {
     renderer.unmount();
@@ -158,7 +169,9 @@ it('сохраняет позицию потока, который не сооб
 it('запускает Player по прямой ссылке после загрузки видео', async () => {
   jest.clearAllMocks();
   mockPositions.clear();
-  usePlaybackSettingsStore.setState({ loaded: true, autoPlayOnResume: false });
+  await ReactTestRenderer.act(() => {
+    usePlaybackSettingsStore.setState({ loaded: true, autoPlayOnResume: false });
+  });
   let playback!: ReturnType<typeof useRutubeVideoPlayback>;
   let renderer!: ReactTestRenderer.ReactTestRenderer;
   const Probe = (): null => {
@@ -183,14 +196,16 @@ it('запускает Player по прямой ссылке после загр
   await ReactTestRenderer.act(async () => {
     await new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
   });
-  expect(recordWatch).toHaveBeenCalledWith('video-c', undefined, false);
+  expect(queued('video-c', 'history')).toEqual(expect.objectContaining({ completed: false }));
   await ReactTestRenderer.act(() => renderer.unmount());
 });
 
 it('добавляет видео в историю сразу после начала просмотра, до первого onProgress', async () => {
   jest.clearAllMocks();
   mockPositions.clear();
-  usePlaybackSettingsStore.setState({ loaded: true, autoPlayOnResume: false });
+  await ReactTestRenderer.act(() => {
+    usePlaybackSettingsStore.setState({ loaded: true, autoPlayOnResume: false });
+  });
   let playback!: ReturnType<typeof useRutubeVideoPlayback>;
   let renderer!: ReactTestRenderer.ReactTestRenderer;
   const Probe = (): null => {
@@ -213,6 +228,6 @@ it('добавляет видео в историю сразу после нач
     await new Promise<void>((resolve) => setTimeout(() => resolve(), 0));
   });
 
-  expect(recordWatch).toHaveBeenCalledWith('video-short', undefined, false);
+  expect(queued('video-short', 'history')).toEqual(expect.objectContaining({ completed: false }));
   await ReactTestRenderer.act(() => renderer.unmount());
 });

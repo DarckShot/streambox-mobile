@@ -1,21 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import {
-  addFavorite,
-  clearFavorites,
-  clearHistory,
-  clearProgress,
-  recordWatch,
-  removeFavorite,
-  removeProgress,
-  saveProgress,
-  type FavoriteRecord,
-} from '../api/me';
+import { clearFavorites, clearHistory, clearProgress, type FavoriteRecord } from '../api/me';
 import { userKeys, userQueries } from '../api/userQueries';
 import { loadFavoriteIds, saveFavoriteIds } from '../storage/favorites';
 import { saveWatchHistory } from '../storage/watchHistory';
-import { clearAllVideoProgress, clearVideoProgress } from '../storage/videoProgress';
+import { clearAllVideoProgress } from '../storage/videoProgress';
 import { drainUserWrites } from '../services/userWriteQueue';
+import {
+  discardOfflineActions,
+  drainOfflineSync,
+  stageOfflineAction,
+  syncOfflineQueue,
+} from '../services/offlineQueue';
 
 export const useCurrentUser = () => useQuery(userQueries.me());
 
@@ -33,12 +29,13 @@ export const useFavoriteMutation = (userId: string) => {
   const key = userKeys.favorites(userId);
   return useMutation({
     mutationFn: async ({ videoId, remove }: { videoId: string; remove: boolean }) => {
+      await stageOfflineAction(userId, { kind: 'favorite', videoId, present: !remove });
+      void syncOfflineQueue(userId);
       if (remove) {
-        await removeFavorite(videoId);
         const legacyIds = await loadFavoriteIds();
         if (legacyIds.includes(videoId))
           await saveFavoriteIds(legacyIds.filter((id) => id !== videoId));
-      } else await addFavorite(videoId);
+      }
     },
     onMutate: async ({ videoId, remove }) => {
       await queryClient.cancelQueries({ queryKey: key });
@@ -55,17 +52,22 @@ export const useFavoriteMutation = (userId: string) => {
     onError: (_error, _variables, context) => {
       if (context?.previous) queryClient.setQueryData(key, context.previous);
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: key }),
+    onSettled: () => undefined,
   });
 };
 
 export const useClearUserData = (userId: string) => {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['users', userId] });
+  const invalidate = () => {
+    void syncOfflineQueue(userId);
+    return queryClient.invalidateQueries({ queryKey: ['users', userId] });
+  };
   return {
     favorites: useMutation({
       mutationFn: async () => {
+        await drainOfflineSync(userId);
         await clearFavorites();
+        await discardOfflineActions(userId, 'favorite');
         await saveFavoriteIds([]);
       },
       onSettled: invalidate,
@@ -73,7 +75,9 @@ export const useClearUserData = (userId: string) => {
     history: useMutation({
       mutationFn: async () => {
         await drainUserWrites(userId);
+        await drainOfflineSync(userId);
         await clearHistory();
+        await discardOfflineActions(userId, 'history');
         await saveWatchHistory([]);
       },
       onSettled: invalidate,
@@ -81,53 +85,12 @@ export const useClearUserData = (userId: string) => {
     progress: useMutation({
       mutationFn: async () => {
         await drainUserWrites(userId);
+        await drainOfflineSync(userId);
         await clearProgress();
+        await discardOfflineActions(userId, 'progress');
         await clearAllVideoProgress();
       },
       onSettled: invalidate,
     }),
   };
-};
-
-export const useRecordWatch = (userId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (videoId: string) => recordWatch(videoId),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: userKeys.history(userId) }),
-  });
-};
-
-export const useSaveProgress = (userId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      videoId,
-      position,
-      duration,
-    }: {
-      videoId: string;
-      position: number;
-      duration: number;
-    }) => saveProgress(videoId, position, duration),
-    onSuccess: (_result, variables) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.progress(userId) });
-      queryClient.invalidateQueries({
-        queryKey: userKeys.videoProgress(userId, variables.videoId),
-      });
-    },
-  });
-};
-
-export const useRemoveProgress = (userId: string) => {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async (videoId: string) => {
-      await removeProgress(videoId);
-      await clearVideoProgress(videoId);
-    },
-    onSuccess: (_result, videoId) => {
-      queryClient.invalidateQueries({ queryKey: userKeys.progress(userId) });
-      queryClient.invalidateQueries({ queryKey: userKeys.videoProgress(userId, videoId) });
-    },
-  });
 };

@@ -92,13 +92,18 @@ export class RutubeService {
     const data = await this.request(`https://rutube.ru/api/play/options/${externalId}`);
     const access = asObject(data.acl_access);
     if (access?.allowed !== true) {
-      throw new ServiceUnavailableException(
-        text(access?.err_text) ?? 'Видео сейчас недоступно для воспроизведения.',
-      );
+      throw new ServiceUnavailableException({
+        code: 'PLAYBACK_UNAVAILABLE',
+        message: 'Видео сейчас недоступно для воспроизведения.',
+      });
     }
     const balancer = asObject(data.video_balancer);
     const url = safeUrl(balancer?.m3u8) ?? safeUrl(balancer?.default);
-    if (!url) throw new ServiceUnavailableException('RUTUBE не вернул ссылку на видеопоток.');
+    if (!url)
+      throw new ServiceUnavailableException({
+        code: 'PLAYBACK_UNAVAILABLE',
+        message: 'RUTUBE не вернул ссылку на видеопоток.',
+      });
     return url;
   }
 
@@ -130,10 +135,12 @@ export class RutubeService {
         throw new BadGatewayException('Обложка RUTUBE слишком большая.');
       }
       const bytes = Buffer.from(await response.arrayBuffer());
-      if (bytes.length > 5_000_000) throw new BadGatewayException('Обложка RUTUBE слишком большая.');
+      if (bytes.length > 5_000_000)
+        throw new BadGatewayException('Обложка RUTUBE слишком большая.');
       return { bytes, contentType };
     } catch (error: unknown) {
-      if (error instanceof BadGatewayException || error instanceof ServiceUnavailableException) throw error;
+      if (error instanceof BadGatewayException || error instanceof ServiceUnavailableException)
+        throw error;
       if (error instanceof Error && error.name === 'AbortError') {
         throw new GatewayTimeoutException('Время ожидания обложки RUTUBE истекло.');
       }
@@ -146,7 +153,10 @@ export class RutubeService {
   private async request(url: string): Promise<JsonObject> {
     const timeout = Number(process.env.RUTUBE_TIMEOUT_MS ?? 8000);
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), Number.isFinite(timeout) && timeout > 0 ? timeout : 8000);
+    const timer = setTimeout(
+      () => controller.abort(),
+      Number.isFinite(timeout) && timeout > 0 ? timeout : 8000,
+    );
     try {
       const response = await fetch(url, {
         signal: controller.signal,
@@ -155,18 +165,31 @@ export class RutubeService {
       if (response.status === 404 || response.status === 410) {
         throw new NotFoundException('Видео не найдено на RUTUBE.');
       }
-      if (!response.ok) throw new ServiceUnavailableException(`RUTUBE временно недоступен (${response.status}).`);
+      if (!response.ok)
+        throw new ServiceUnavailableException({
+          code: 'RUTUBE_UNAVAILABLE',
+          message: 'RUTUBE временно недоступен.',
+        });
       const payload: unknown = await response.json();
       const data = asObject(payload);
       if (!data) throw new BadGatewayException('RUTUBE вернул некорректный ответ.');
       return data;
     } catch (error: unknown) {
-      if (error instanceof NotFoundException || error instanceof ServiceUnavailableException || error instanceof BadGatewayException) throw error;
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ServiceUnavailableException ||
+        error instanceof BadGatewayException
+      )
+        throw error;
       if (error instanceof Error && error.name === 'AbortError') {
         throw new GatewayTimeoutException('Время ожидания RUTUBE истекло.');
       }
-      if (error instanceof SyntaxError) throw new BadGatewayException('RUTUBE вернул некорректный JSON.');
-      throw new ServiceUnavailableException('Нет соединения с RUTUBE.');
+      if (error instanceof SyntaxError)
+        throw new BadGatewayException('RUTUBE вернул некорректный JSON.');
+      throw new ServiceUnavailableException({
+        code: 'RUTUBE_UNAVAILABLE',
+        message: 'Нет соединения с RUTUBE.',
+      });
     } finally {
       clearTimeout(timer);
     }

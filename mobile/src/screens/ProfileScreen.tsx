@@ -1,9 +1,9 @@
 import { useTheme } from '@react-navigation/native';
 import type { ReactElement } from 'react';
 import { Pressable, ScrollView, Text, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ProfileMenu } from '../components/profile/ProfileMenu';
+import { TabSafeAreaView } from '../components/layout/TabSafeAreaView';
 import { profileScreenStyles as styles } from '../components/profile/profileStyles';
 import { ProfileStats } from '../components/profile/ProfileStats';
 import { useProfileSummary } from '../hooks/useProfileSummary';
@@ -20,7 +20,7 @@ export const ProfileScreen = (): ReactElement => {
   const { logout, migrationStatus, retryMigration } = useAuth();
 
   return (
-    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
+    <TabSafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
       <ScrollEdgeBlur>
         <ScrollView
           contentContainerStyle={[styles.content, compact ? styles.contentCompact : null]}
@@ -81,6 +81,6 @@ export const ProfileScreen = (): ReactElement => {
           </Pressable>
         </ScrollView>
       </ScrollEdgeBlur>
-    </SafeAreaView>
+    </TabSafeAreaView>
   );
 };

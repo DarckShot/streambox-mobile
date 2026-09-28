@@ -2,6 +2,8 @@
 
 NestJS API с Prisma и SQLite. Отдельный сервер базы не нужен. Сервер хранит только нормализованные метаданные RUTUBE, не хранит видеофайлы, сырой JSON или временные HLS URL.
 
+Каталог читается из SQLite даже при недоступном RUTUBE. Повторный импорт использует уже сохранённые метаданные, если `lastSyncedAt` моложе одного часа; явная синхронизация всегда запрашивает RUTUBE. Ошибки API имеют `statusCode`, `code` и безопасное сообщение; временная недоступность RUTUBE и playback различаются по `code`. Запросы к RUTUBE ограничены `RUTUBE_TIMEOUT_MS`.
+
 ## Запуск
 
 Требуется Node.js 22+. Из каталога `backend/`:
@@ -18,24 +20,24 @@ npm run start:dev
 
 `.env`:
 
-| Переменная | Значение |
-| --- | --- |
-| `DATABASE_URL` | Prisma SQLite URL, например `file:./dev.db` |
-| `PORT` | HTTP-порт, по умолчанию `3000` |
-| `RUTUBE_TIMEOUT_MS` | Таймаут RUTUBE, по умолчанию `8000` |
-| `JWT_ACCESS_SECRET` | Секрет access JWT, от 32 символов |
+| Переменная           | Значение                                     |
+| -------------------- | -------------------------------------------- |
+| `DATABASE_URL`       | Prisma SQLite URL, например `file:./dev.db`  |
+| `PORT`               | HTTP-порт, по умолчанию `3000`               |
+| `RUTUBE_TIMEOUT_MS`  | Таймаут RUTUBE, по умолчанию `8000`          |
+| `JWT_ACCESS_SECRET`  | Секрет access JWT, от 32 символов            |
 | `JWT_REFRESH_SECRET` | Отдельный секрет refresh JWT, от 32 символов |
 
 ## API
 
-| Метод | Путь | Назначение |
-| --- | --- | --- |
-| GET | `/videos` | Каталог из SQLite; `?search=python` ищет по названию без учёта регистра |
-| GET | `/videos/:id` | Одно видео или 404 |
-| POST | `/videos/import` | `{ "input": "<RUTUBE URL или ID>" }`, импорт или обновление |
-| POST | `/videos/:id/sync` | Повторная синхронизация метаданных |
-| GET | `/videos/:id/playback` | `{ "url": "<временный HLS URL>" }`, `no-store` |
-| GET | `/videos/:id/thumbnail` | Проксирование обложки с CDN RUTUBE без сохранения файла |
+| Метод | Путь                    | Назначение                                                              |
+| ----- | ----------------------- | ----------------------------------------------------------------------- |
+| GET   | `/videos`               | Каталог из SQLite; `?search=python` ищет по названию без учёта регистра |
+| GET   | `/videos/:id`           | Одно видео или 404                                                      |
+| POST  | `/videos/import`        | `{ "input": "<RUTUBE URL или ID>" }`, импорт или обновление             |
+| POST  | `/videos/:id/sync`      | Повторная синхронизация метаданных                                      |
+| GET   | `/videos/:id/playback`  | `{ "url": "<временный HLS URL>" }`, `no-store`                          |
+| GET   | `/videos/:id/thumbnail` | Проксирование обложки с CDN RUTUBE без сохранения файла                 |
 
 Пример импорта:
 
@@ -53,10 +55,10 @@ curl -X POST http://localhost:3000/videos/import \
 
 Тем же заголовком защищены все `/me/*`:
 
-| Данные | Методы и пути |
-| --- | --- |
+| Данные    | Методы и пути                                                                     |
+| --------- | --------------------------------------------------------------------------------- |
 | Избранное | `GET /me/favorites`, `POST/DELETE /me/favorites/:videoId`, `DELETE /me/favorites` |
-| История | `GET/DELETE /me/history`, `PUT/DELETE /me/history/:videoId` |
-| Прогресс | `GET/DELETE /me/progress`, `GET/PUT/DELETE /me/progress/:videoId` |
+| История   | `GET/DELETE /me/history`, `PUT/DELETE /me/history/:videoId`                       |
+| Прогресс  | `GET/DELETE /me/progress`, `GET/PUT/DELETE /me/progress/:videoId`                 |
 
 `PUT /me/history/:videoId` принимает необязательные `watchedAt`, `completed`; `PUT /me/progress/:videoId` — `positionSeconds`, `durationSeconds`, необязательный `observedAt`. Все операции ограничены текущим пользователем. Несуществующее видео при добавлении/обновлении даёт 404; отсутствие авторизации — 401. SQLite-модели `User`, `RefreshSession`, `Favorite`, `WatchHistory`, `PlaybackProgress` создаются Prisma migrations.

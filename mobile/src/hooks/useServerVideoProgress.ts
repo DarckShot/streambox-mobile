@@ -1,16 +1,17 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 
-import { recordWatch, removeProgress, saveProgress } from '../api/me';
 import { userKeys, userQueries } from '../api/userQueries';
 import { clampPlaybackTime } from '../utils/clampPlaybackTime';
 import { useCurrentUser } from './useUserData';
 import { getSessionGeneration } from '../auth/session';
 import { clearVideoProgress } from '../storage/videoProgress';
 import { enqueueUserWrite } from '../services/userWriteQueue';
+import { stageOfflineAction, syncOfflineQueue, getPendingActions } from '../services/offlineQueue';
 
 const SAVE_INTERVAL_MS = 5000;
+const LOCAL_SAVE_INTERVAL_MS = 1000;
 const SEEK_TOLERANCE_SECONDS = 3;
 interface SavedProgress {
   loaded: boolean;
@@ -38,34 +39,6 @@ export const useServerVideoProgress = (
     ...userQueries.videoProgress(userId, videoId),
     enabled: Boolean(userId),
   });
-  const { mutateAsync: saveAsync } = useMutation({
-    mutationFn: ({
-      time,
-      duration,
-      generation,
-    }: {
-      time: number;
-      duration: number;
-      generation: number;
-    }) =>
-      generation === getSessionGeneration()
-        ? saveProgress(videoId, time, duration)
-        : Promise.resolve(null),
-    retry: 2,
-    retryDelay: 1000,
-  });
-  const { mutateAsync: removeAsync } = useMutation({ mutationFn: () => removeProgress(videoId) });
-  const { mutateAsync: recordWatchAsync } = useMutation({
-    mutationFn: ({ completed, generation }: { completed: boolean; generation: number }) =>
-      generation === getSessionGeneration()
-        ? recordWatch(videoId, undefined, completed)
-        : Promise.resolve(null),
-    retry: 2,
-    retryDelay: 1000,
-    onSuccess: (result) => {
-      if (result) queryClient.invalidateQueries({ queryKey: userKeys.history(userId) });
-    },
-  });
   const [saved, setSaved] = useState<SavedProgress>({ loaded: false, position: null });
   const loadedRef = useRef(false);
   const completedRef = useRef(false);
@@ -73,6 +46,7 @@ export const useServerVideoProgress = (
   const latestTimeRef = useRef<number | null>(null);
   const pendingSeekRef = useRef<number | null>(null);
   const lastWriteAtRef = useRef(0);
+  const lastLocalWriteAtRef = useRef(0);
   const hasProgressRef = useRef(false);
   const watchedRef = useRef(false);
   const sessionGenerationRef = useRef(getSessionGeneration());
@@ -84,12 +58,15 @@ export const useServerVideoProgress = (
       return;
     }
     if (!userId || progress.isPending || loadedRef.current) return;
-    const position = progress.data?.positionSeconds;
+    const queued = getPendingActions(userId).find(
+      (action) => action.kind === 'progress' && action.videoId === videoId,
+    );
+    const position = queued?.kind === 'progress' ? queued.position : progress.data?.positionSeconds;
     const valid = typeof position === 'number' && Number.isFinite(position) && position > 0;
     latestTimeRef.current = valid ? position : null;
     loadedRef.current = true;
     setSaved({ loaded: true, position: valid ? position : null });
-  }, [user.isError, userId, progress.isPending, progress.data]);
+  }, [user.isError, userId, videoId, progress.isPending, progress.data]);
 
   const updateCache = useCallback((): void => {
     queryClient.invalidateQueries({ queryKey: userKeys.progress(userId) });
@@ -100,17 +77,39 @@ export const useServerVideoProgress = (
     (time: number): void => {
       if (!userId) return;
       lastWriteAtRef.current = Date.now();
+      lastLocalWriteAtRef.current = Date.now();
       enqueueUserWrite(`${userId}:${videoId}`, async () => {
         if (sessionGenerationRef.current !== getSessionGeneration()) return;
-        await saveAsync({
-          time,
+        await stageOfflineAction(userId, {
+          kind: 'progress',
+          videoId,
+          position: time,
           duration: durationRef.current,
-          generation: sessionGenerationRef.current,
+          observedAt: new Date().toISOString(),
         });
+        void syncOfflineQueue(userId);
         updateCache();
       });
     },
-    [saveAsync, updateCache, userId, videoId],
+    [updateCache, userId, videoId],
+  );
+
+  const saveLocally = useCallback(
+    (time: number): void => {
+      if (!userId) return;
+      lastLocalWriteAtRef.current = Date.now();
+      enqueueUserWrite(`${userId}:${videoId}`, async () => {
+        if (sessionGenerationRef.current !== getSessionGeneration()) return;
+        await stageOfflineAction(userId, {
+          kind: 'progress',
+          videoId,
+          position: time,
+          duration: durationRef.current,
+          observedAt: new Date().toISOString(),
+        });
+      });
+    },
+    [userId, videoId],
   );
 
   const flush = useCallback((): void => {
@@ -137,10 +136,17 @@ export const useServerVideoProgress = (
     enqueueUserWrite(`${userId}:${videoId}`, async () => {
       if (sessionGenerationRef.current !== getSessionGeneration()) return;
       await clearVideoProgress(videoId);
-      await removeAsync();
+      await stageOfflineAction(userId, {
+        kind: 'progress',
+        videoId,
+        position: 0,
+        duration: durationRef.current,
+        observedAt: new Date().toISOString(),
+      });
+      void syncOfflineQueue(userId);
       updateCache();
     });
-  }, [removeAsync, updateCache, userId, videoId]);
+  }, [updateCache, userId, videoId]);
 
   const recordStart = useCallback((): void => {
     if (!userId || watchedRef.current || completedRef.current) return;
@@ -148,12 +154,19 @@ export const useServerVideoProgress = (
     enqueueUserWrite(`${userId}:${videoId}:history`, async () => {
       if (sessionGenerationRef.current !== getSessionGeneration()) return;
       try {
-        await recordWatchAsync({ completed: false, generation: sessionGenerationRef.current });
+        await stageOfflineAction(userId, {
+          kind: 'history',
+          videoId,
+          watchedAt: new Date().toISOString(),
+          completed: false,
+        });
+        void syncOfflineQueue(userId);
+        void queryClient.invalidateQueries({ queryKey: userKeys.history(userId) });
       } catch {
         if (!completedRef.current) watchedRef.current = false;
       }
     });
-  }, [recordWatchAsync, userId, videoId]);
+  }, [queryClient, userId, videoId]);
 
   const recordProgress = useCallback(
     (time: number): void => {
@@ -169,9 +182,11 @@ export const useServerVideoProgress = (
         hasProgressRef.current = true;
         recordStart();
         if (Date.now() - lastWriteAtRef.current >= SAVE_INTERVAL_MS) persist(nextTime);
+        else if (Date.now() - lastLocalWriteAtRef.current >= LOCAL_SAVE_INTERVAL_MS)
+          saveLocally(nextTime);
       }
     },
-    [persist, recordStart],
+    [persist, recordStart, saveLocally],
   );
 
   const recordSeek = useCallback(
@@ -188,13 +203,18 @@ export const useServerVideoProgress = (
 
   const complete = useCallback((): void => {
     completedRef.current = true;
-    enqueueUserWrite(`${userId}:${videoId}:history`, () =>
-      sessionGenerationRef.current === getSessionGeneration()
-        ? recordWatchAsync({ completed: true, generation: sessionGenerationRef.current })
-        : Promise.resolve(),
-    );
+    enqueueUserWrite(`${userId}:${videoId}:history`, async () => {
+      if (sessionGenerationRef.current !== getSessionGeneration()) return;
+      await stageOfflineAction(userId, {
+        kind: 'history',
+        videoId,
+        watchedAt: new Date().toISOString(),
+        completed: true,
+      });
+      void syncOfflineQueue(userId);
+    });
     clear();
-  }, [clear, recordWatchAsync, userId, videoId]);
+  }, [clear, userId, videoId]);
   const beginReplay = useCallback((): void => {
     completedRef.current = false;
     hasProgressRef.current = false;

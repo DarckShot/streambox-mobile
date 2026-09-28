@@ -4,11 +4,11 @@ import ReactTestRenderer from 'react-test-renderer';
 
 import { videoKeys } from '../src/api/videoQueries';
 import { userKeys } from '../src/api/userQueries';
-import { addFavorite, removeFavorite } from '../src/api/me';
 import { sampleVideo } from '../testFixtures/video';
 import { RootRoute } from '../src/navigation/routes';
 import { VideoDetailsScreen } from '../src/screens/VideoDetailsScreen';
 import { loadFavoriteIds, saveFavoriteIds } from '../src/storage/favorites';
+import { getPendingActions } from '../src/services/offlineQueue';
 
 const mockFavoriteIds: string[] = [];
 jest.mock('../src/api/me', () => ({
@@ -72,7 +72,11 @@ it('кнопка VideoDetails добавляет и удаляет видео, �
     await new Promise<void>((resolve) => setTimeout(() => resolve(), 30));
   });
 
-  expect(addFavorite).toHaveBeenCalledWith('video-001');
+  expect(getPendingActions('user-1')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'favorite', videoId: 'video-001', present: true }),
+    ]),
+  );
   expect(
     renderer.root.findAllByProps({ accessibilityLabel: 'Убрать из избранного' }).length,
   ).toBeGreaterThan(0);
@@ -84,7 +88,11 @@ it('кнопка VideoDetails добавляет и удаляет видео, �
     await new Promise<void>((resolve) => setTimeout(() => resolve(), 30));
   });
 
-  expect(removeFavorite).toHaveBeenCalledWith('video-001');
+  expect(getPendingActions('user-1')).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ kind: 'favorite', videoId: 'video-001', present: false }),
+    ]),
+  );
   expect(await loadFavoriteIds()).toEqual([]);
   expect(
     renderer.root.findAllByProps({ accessibilityLabel: 'В избранное' }).length,

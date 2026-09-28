@@ -2,6 +2,7 @@ import { useVideosByIds } from './useVideosByIds';
 import { useUserCollections } from './useUserData';
 import type { HistoryItem } from '../types/history';
 import { buildHistoryItems } from '../utils/history';
+import { useOnline } from '../services/networkState';
 
 interface HistoryItemsResult {
   userId: string;
@@ -15,6 +16,7 @@ interface HistoryItemsResult {
 }
 
 export const useHistoryItems = (): HistoryItemsResult => {
+  const online = useOnline();
   const { userId, history, progress } = useUserCollections();
   const records = history.data ?? [];
   const videos = useVideosByIds(records.map((entry) => entry.videoId));
@@ -30,9 +32,12 @@ export const useHistoryItems = (): HistoryItemsResult => {
     userId,
     items,
     recordCount: records.length,
-    loading: history.isPending || progress.isPending,
+    loading: online && (history.isPending || progress.isPending),
     videosLoading: videos.isLoading,
-    error: history.error?.message ?? progress.error?.message ?? null,
+    error:
+      !online && history.isPending
+        ? 'Нет подключения. История загрузится после восстановления сети.'
+        : history.error?.message ?? progress.error?.message ?? null,
     videosError: videos.error,
     retry,
   };

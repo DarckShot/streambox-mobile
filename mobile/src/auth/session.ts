@@ -14,6 +14,7 @@ let accessToken: string | null = null;
 let refreshPromise: Promise<string> | null = null;
 let generation = 0;
 let onExpired: (() => void) | null = null;
+let offlineIdentityActive = false;
 let keychainQueue: Promise<unknown> = Promise.resolve();
 
 const enqueueKeychain = <T>(operation: () => Promise<T>): Promise<T> => {
@@ -37,11 +38,16 @@ export const setSessionExpiredHandler = (handler: (() => void) | null): void => 
 };
 
 export const getAccessToken = (): string | null => accessToken;
+export const hasActiveSession = (): boolean => Boolean(accessToken || offlineIdentityActive);
+export const setOfflineIdentityActive = (active: boolean): void => {
+  offlineIdentityActive = active;
+};
 export const getSessionGeneration = (): number => generation;
 
 export const clearSession = async (): Promise<void> => {
   generation += 1;
   accessToken = null;
+  offlineIdentityActive = false;
   await enqueueKeychain(() => Keychain.resetGenericPassword({ service: SERVICE }));
 };
 
@@ -56,6 +62,7 @@ export const saveSession = async (
   });
   if (expectedGeneration !== generation) throw new Error('Сессия завершена.');
   accessToken = tokens.accessToken;
+  offlineIdentityActive = false;
 };
 
 export const refreshSession = async (): Promise<string> => {
@@ -71,6 +78,10 @@ export const refreshSession = async (): Promise<string> => {
       });
       data = response.data;
     } catch (error: unknown) {
+      console.warn(
+        'Не удалось обновить сессию:',
+        axios.isAxiosError(error) ? error.response?.status ?? error.code ?? 'network' : 'unknown',
+      );
       if (axios.isAxiosError(error) && error.response?.status === 401 && startedAt === generation) {
         await clearSession();
         onExpired?.();

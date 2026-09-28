@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import axios from 'axios';
 
 import { useAuth } from '../../auth/AuthProvider';
+import { useBannerVisible } from '../network/OfflineBanner';
 import { authStyles as styles } from './AuthForm.styles';
 
 interface AuthFormProps {
@@ -28,6 +29,7 @@ export const AuthForm = ({ mode, onAlternate }: AuthFormProps): ReactElement => 
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const isRegister = mode === 'register';
+  const bannerVisible = useBannerVisible();
 
   const submit = async (): Promise<void> => {
     if (pending) return;
@@ -54,7 +56,10 @@ export const AuthForm = ({ mode, onAlternate }: AuthFormProps): ReactElement => 
   };
 
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      edges={bannerVisible || isRegister ? ['left', 'right', 'bottom'] : undefined}
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.screen}

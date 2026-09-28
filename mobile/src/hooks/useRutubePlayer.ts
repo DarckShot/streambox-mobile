@@ -11,6 +11,8 @@ import { getVideoPlaybackUrl } from '../api/videos';
 import { videoKeys } from '../api/videoQueries';
 import type { BasicVideoPlayerStatus } from '../types/player';
 import { INITIAL_RUTUBE_PLAYER_STATE, rutubePlayerReducer } from './useRutubePlayer.reducer';
+import { useOnline } from '../services/networkState';
+import { toApiError } from '../api/client';
 
 interface RutubePlayerState {
   currentTime: number;
@@ -45,18 +47,12 @@ interface UseRutubePlayerResult {
   videoEvents: RutubePlayerVideoEvents;
 }
 
-const getPlaybackErrorMessage = (data: OnVideoErrorData): string => {
-  const message =
-    data.error.localizedDescription ??
-    data.error.localizedFailureReason ??
-    data.error.errorString ??
-    data.error.error;
-
-  return message ? `Ошибка воспроизведения: ${message}` : 'Не удалось воспроизвести видео.';
-};
+const getPlaybackErrorMessage = (_data: OnVideoErrorData): string =>
+  'Не удалось воспроизвести видео. Проверьте соединение и попробуйте ещё раз.';
 
 export const useRutubePlayer = (videoId: string, isActive: boolean): UseRutubePlayerResult => {
   const queryClient = useQueryClient();
+  const online = useOnline();
   const [state, dispatch] = useReducer(rutubePlayerReducer, INITIAL_RUTUBE_PLAYER_STATE);
   const {
     currentTime,
@@ -73,6 +69,14 @@ export const useRutubePlayer = (videoId: string, isActive: boolean): UseRutubePl
 
   useEffect(() => {
     const controller = new AbortController();
+
+    if (!online) {
+      dispatch({
+        type: 'loadFailed',
+        errorMessage: 'Нет подключения. Видео доступно только онлайн.',
+      });
+      return () => controller.abort();
+    }
 
     const loadPlaybackUrl = async (): Promise<void> => {
       dispatch({ type: 'loadRequested' });
@@ -92,7 +96,7 @@ export const useRutubePlayer = (videoId: string, isActive: boolean): UseRutubePl
         if (!controller.signal.aborted) {
           dispatch({
             type: 'loadFailed',
-            errorMessage: error instanceof Error ? error.message : 'Не удалось загрузить видео.',
+            errorMessage: toApiError(error).message,
           });
         }
       }
@@ -104,7 +108,7 @@ export const useRutubePlayer = (videoId: string, isActive: boolean): UseRutubePl
       controller.abort();
       queryClient.cancelQueries({ queryKey: videoKeys.playback(videoId) });
     };
-  }, [queryClient, videoId, reloadKey]);
+  }, [queryClient, videoId, reloadKey, online]);
 
   useEffect(() => {
     if (!isActive) {
